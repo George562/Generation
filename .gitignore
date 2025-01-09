@@ -4,5 +4,5 @@ client.cpp
 setupScript.iss
 versions/
 *.exe
-*.ico
+gog.ico
 sources/saves/*.json

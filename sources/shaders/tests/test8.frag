@@ -29,8 +29,7 @@ float noise (in vec2 uv) {
 void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy;
     float res = 0.;
-    uv *= rot(uv.y * PI / 3.);
-    uv *= 30.;
+    uv *= 10.;
 
     // float pos = random(floor(vec2(uv.x + iTime, uv.y + iTime * 0.5)));
     // res += rectangle(fract(uv), vec2(0., 0.1 + pos * 0.8), vec2(0.2, 1.), PI / 2.);
