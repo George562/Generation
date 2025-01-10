@@ -49,7 +49,7 @@ At the moment the game is not playable. We are at the development stage of the e
 - **[Player](https://github.com/George562/Generation/blob/main/sources/textures/Player.png)**
 
 <p align="center">
-    <img src="./sources/textures/Portal.png" height="200">
+    <img src="./sources/textures/Portal3.png" height="200">
   <img src="./sources/textures/Player.png" width="200">
 </p>
 
