@@ -43,6 +43,7 @@ void main() {
     float param = voronoi(Muv + vec2(iTime * 0.1)) * 2.5;
     color *= param * param * param * smoothstep(0.1, 0.3, length(uv));
     color = mix(color, vec4(-1.), smoothstep(0.7, 0.95, 2. * d));
+    color.a = 1. - smoothstep(0.7, 0.95, 2. * d) * (1. - max(color.r, max(color.r, color.b) ) );
     // color += smoothstep(0.05, 0., abs(2. * length(uv) - 0.9));
     gl_FragColor = color;
 }

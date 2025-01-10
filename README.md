@@ -1,6 +1,6 @@
 # Generation
 
-![Release](https://img.shields.io/badge/Version-v0.0.4-blueviolet)
+![Release](https://img.shields.io/badge/Version-v0.2.2-blueviolet)
 ![Language](https://img.shields.io/badge/Language-C%2B%2B-0052cf)
 ![Open Source](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)
 
@@ -37,8 +37,7 @@ At the moment the game is not playable. We are at the development stage of the e
   - move and zoom by mouse
   - can be hold on player by Space
 - Enemies
-  - DistortedScientist
-  - Distorted
+  - Angular Body
 - Shop (you can buy something usefull)
   - drugs (healing can be used by H)
   - dasher (aplpy you to dashing while holding Shift)
@@ -46,20 +45,18 @@ At the moment the game is not playable. We are at the development stage of the e
 
 # Our sprites and arts
 - **[Textures](https://github.com/George562/Generation/blob/main/sources/textures)**
-- **[Portal](https://github.com/George562/Generation/blob/main/sources/textures/Portal.png)**
+- **[Portal](https://github.com/George562/Generation/blob/main/sources/textures/Portal3.png)**
 - **[Player](https://github.com/George562/Generation/blob/main/sources/textures/Player.png)**
-- **[Farmer](https://github.com/George562/Generation/blob/main/sources/textures/Farmer.png)**
-- **[DistortedScientist](https://github.com/George562/Generation/blob/main/sources/textures/DistortedScientist.png)**
 
 <p align="center">
-    <img src="./sources/textures/Portal.png" height="300">
+    <img src="./sources/textures/Portal.png" height="200">
   <img src="./sources/textures/Player.png" width="200">
-  <img src="./sources/textures/Farmer.png" width="200">
-  <img src="./sources/textures/DistortedScientist.png" width="200">
 </p>
 
 # Our music
-- **[Main menu music](https://github.com/George562/Generation/blob/main/sources/music/RestAreaMusic.wav)**
+- **[Main menu music](https://github.com/George562/Generation/blob/main/sources/music/MainMenu.wav)**
+- **[Dungeon music](https://github.com/George562/Generation/blob/main/sources/music/Fight1.flac)**
+- **[Dungeon music](https://github.com/George562/Generation/blob/main/sources/music/Fight2.flac)**
 
 # Attention
 
