@@ -75,7 +75,6 @@ int completedLevels = 0;
 int curLevel = 1;
 
 
-sf::Time coutEvery = sf::milliseconds(1000);
 int drawCount = 0;
 
 bool playerCanDash;

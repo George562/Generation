@@ -8,6 +8,13 @@
 // Class
 ////////////////////////////////////////////////////////////
 
+enum TargetMode {
+    rest,
+    wander,
+    pursuit,
+    search
+};
+
 #pragma pack(push, 1)
 class Creature : public sf::Drawable {
 public:
@@ -26,6 +33,10 @@ public:
     float VelocityBuff;
     float Acceleration;
     sf::Vector2f target; // target point to move towards
+    TargetMode targetMode = wander;
+    bool atTarget = false;
+    sf::Time passiveWait = sf::Time::Zero;          // How long to wait before switching to another mode of targeting if not forced by attacking or other mechanics
+                                                    // Will change during battle or rest to not make the input reading unfair or make the enemy too dumb
     bool makeADash = false;
     mutable sf::Vector2f lookDirection = {1.f, 0.f};
 
@@ -95,6 +106,7 @@ public:
         if (tempv.y == -1) Velocity.y = 0;
 
         hitbox.move(Velocity * ElapsedTimeAsSecond);
+        atTarget = length(hitbox.getCenter() - target) < 1e-5;
     }
 
     virtual void shift(sf::Vector2f shift) {}

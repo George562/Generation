@@ -249,9 +249,9 @@ void init() {
     playerCanDash = player.inventory.find(ItemID::dasher) != -1;
 
     Musics::MainMenu.setLoop(true);
-    Musics::MainMenu.setVolume(15);
-    Musics::Fight1.setVolume(15);
-    Musics::Fight2.setVolume(15);
+    Musics::MainMenu.setVolume(0);
+    Musics::Fight1.setVolume(0);
+    Musics::Fight2.setVolume(0);
 
     for (Weapon*& w: Weapons) w->ShootSound.setRelativeToListener(true);
 
@@ -1326,6 +1326,8 @@ void LevelGenerate(int n, int m) {
     int amountOfEveryEnemiesOnLevel = curLevel + (curLevel > completedLevels ? 4 : 2);
     for (int i = 0; i < amountOfEveryEnemiesOnLevel; i++) {
         Enemies.push_back(new AngularBody(3 + rand() % 4));
+        Enemies.back()->atTarget = true;
+        Enemies.back()->targetMode = TargetMode::rest;
         // Enemies.push_back(new Distorted());
     }
     for (Enemy*& enemy : Enemies) DrawableStuff.push_back(enemy);
@@ -1511,8 +1513,10 @@ void updateEnemies() {
             EnemyDie(i--);
         } else {
             std::vector<sf::Vector2f> centers;
-            if (player.isAlive() && CurLocation->ExistDirectWay(Enemies[i]->hitbox.getCenter(), player.hitbox.getCenter()))
+            if (player.isAlive() && CurLocation->ExistDirectWay(Enemies[i]->hitbox.getCenter(), player.hitbox.getCenter())) {
                 centers.push_back(player.hitbox.getCenter());
+                std::cout << "Enemy \"" << Enemies[i]->Name.getText() << "\" has found a direct way to the player\n";
+            }
             mutexOnDataChange.lock();
             for (Player& p: ConnectedPlayers) {
                 if (p.isAlive() && CurLocation->ExistDirectWay(Enemies[i]->hitbox.getCenter(), p.hitbox.getCenter()))
@@ -1520,11 +1524,35 @@ void updateEnemies() {
             }
             mutexOnDataChange.unlock();
             if (centers.size() > 0) {
+                Enemies[i]->targetMode = TargetMode::pursuit;
+                Enemies[i]->VelocityBuff = 1.0;
                 Enemies[i]->setTarget(centers[0]);
                 for (int j = 1; j < centers.size(); j++)
                     if (distance(Enemies[i]->hitbox.getCenter(), centers[j]) < distance(Enemies[i]->hitbox.getCenter(), Enemies[i]->target))
                         Enemies[i]->setTarget(centers[j]);
                 Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->target - Enemies[i]->hitbox.getCenter(), Enemies[i]->faction);
+            }
+            else {
+                if (GameClock->getElapsedTime() >= Enemies[i]->passiveWait and not Enemies[i]->atTarget) {
+                    Enemies[i]->targetMode = TargetMode::rest;
+                    Enemies[i]->passiveWait = sf::seconds(GameClock->getElapsedTime().asSeconds() + std::rand() % 5 + 5);
+                    Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter());
+                    std::cout << Enemies[i]->Name.getText() << " takes action: resting due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                    Enemies[i]->VelocityBuff = 0;
+                }
+                if (Enemies[i]->atTarget and GameClock->getElapsedTime() < Enemies[i]->passiveWait) {
+                    Enemies[i]->targetMode = TargetMode::rest;
+                    std::cout << Enemies[i]->Name.getText() << " takes action: resting until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                    Enemies[i]->VelocityBuff = 0;
+                }
+                if (GameClock->getElapsedTime() >= Enemies[i]->passiveWait) {
+                    sf::Vector2f newTarget = sf::Vector2f(std::rand() % 2000 - 1000, std::rand() % 2000 - 1000);
+                    Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
+                    Enemies[i]->passiveWait = sf::seconds(GameClock->getElapsedTime().asSeconds() + std::rand() % 5 + 3);
+                    Enemies[i]->targetMode = TargetMode::wander;
+                    std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target.x << " " << Enemies[i]->target.y << "\n";
+                    Enemies[i]->VelocityBuff = 0.5;
+                }
             }
             Enemies[i]->move(CurLocation);
             Enemies[i]->UpdateState();
