@@ -9,6 +9,22 @@ class Enemy : public Creature {
 public:
     Enemy(std::string name) : Creature(name, faction::Enemy) {}
     ~Enemy() { if (CurWeapon) { delete CurWeapon; } }
+    void updateLook() const override {
+        sf::Vector2f dir = this->target - hitbox.getCenter();
+        if (dir.x == 0.f && dir.y == 0.f) return;
+        dir = normalize(dir);
+
+        float s = cross(dir, lookDirection), delta = M_PI * TimeSinceLastFrame.asSeconds();
+        if (s >= sin(delta)) {
+            lookDirection = RotateOn(delta, lookDirection);
+        } else if (s <= sin(-delta)) {
+            lookDirection = RotateOn(-delta, lookDirection);
+        } else if (distance(dir, lookDirection) > 1.5f) {
+            lookDirection = RotateOn(delta, lookDirection);
+        } else {
+            lookDirection = dir;
+        }
+    }
 };
 ////////////////////////////////////////////////////////////
 
@@ -100,14 +116,9 @@ public:
     }
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states = sf::RenderStates::Default) const {
-        Shaders::Enemy.setUniform("direction", this->target - hitbox.getCenter());
+        Shaders::Enemy.setUniform("direction", this->lookDirection);
         Shaders::Enemy.setUniform("angles", angles);
-        if (animation != nullptr) {
-            animation->setPosition(hitbox.getCenter());
-            target.draw(*animation, states);
-        }
-        Name.setPosition(hitbox.getCenter().x - Name.Width / 2.f, hitbox.getPosition().y - Name.Height);
-        target.draw(Name, states);
+        Creature::draw(target, states);
     }
 };
 
@@ -135,13 +146,8 @@ public:
     }
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states = sf::RenderStates::Default) const {
-        Shaders::Boss.setUniform("direction", this->target - hitbox.getCenter());
-        if (animation != nullptr) {
-            animation->setPosition(hitbox.getCenter());
-            target.draw(*animation, states);
-        }
-        Name.setPosition(hitbox.getCenter().x - Name.Width / 2.f, hitbox.getPosition().y - Name.Height);
-        target.draw(Name, states);
+        Shaders::Boss.setUniform("direction", this->lookDirection);
+        Creature::draw(target, states);
     }
 };
 

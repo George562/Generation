@@ -1515,7 +1515,7 @@ void updateEnemies() {
             std::vector<sf::Vector2f> centers;
             if (player.isAlive() && CurLocation->ExistDirectWay(Enemies[i]->hitbox.getCenter(), player.hitbox.getCenter())) {
                 centers.push_back(player.hitbox.getCenter());
-                std::cout << "Enemy \"" << Enemies[i]->Name.getText() << "\" has found a direct way to the player\n";
+                // std::cout << "Enemy \"" << Enemies[i]->Name.getText() << "\" has found a direct way to the player\n";
             }
             mutexOnDataChange.lock();
             for (Player& p: ConnectedPlayers) {
@@ -1533,24 +1533,24 @@ void updateEnemies() {
                 Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->target - Enemies[i]->hitbox.getCenter(), Enemies[i]->faction);
             }
             else {
-                if (GameClock->getElapsedTime() >= Enemies[i]->passiveWait and not Enemies[i]->atTarget) {
+                if (GameTime >= Enemies[i]->passiveWait && !Enemies[i]->atTarget) {
                     Enemies[i]->targetMode = TargetMode::rest;
-                    Enemies[i]->passiveWait = sf::seconds(GameClock->getElapsedTime().asSeconds() + std::rand() % 5 + 5);
+                    Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 5);
                     Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter());
-                    std::cout << Enemies[i]->Name.getText() << " takes action: resting due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                    // std::cout << Enemies[i]->Name.getText() << " takes action: resting due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
                     Enemies[i]->VelocityBuff = 0;
                 }
-                if (Enemies[i]->atTarget and GameClock->getElapsedTime() < Enemies[i]->passiveWait) {
+                if (Enemies[i]->atTarget && GameTime < Enemies[i]->passiveWait) {
                     Enemies[i]->targetMode = TargetMode::rest;
-                    std::cout << Enemies[i]->Name.getText() << " takes action: resting until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                    // std::cout << Enemies[i]->Name.getText() << " takes action: resting until " << Enemies[i]->passiveWait.asSeconds() << "\n";
                     Enemies[i]->VelocityBuff = 0;
                 }
-                if (GameClock->getElapsedTime() >= Enemies[i]->passiveWait) {
+                if (GameTime >= Enemies[i]->passiveWait) {
                     sf::Vector2f newTarget = sf::Vector2f(std::rand() % 2000 - 1000, std::rand() % 2000 - 1000);
                     Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
-                    Enemies[i]->passiveWait = sf::seconds(GameClock->getElapsedTime().asSeconds() + std::rand() % 5 + 3);
+                    Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 3);
                     Enemies[i]->targetMode = TargetMode::wander;
-                    std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target.x << " " << Enemies[i]->target.y << "\n";
+                    // std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target.x << " " << Enemies[i]->target.y << "\n";
                     Enemies[i]->VelocityBuff = 0.5;
                 }
             }
@@ -1828,7 +1828,7 @@ bool useItem(Item*& item) {
 //============================================================================================== GAME GRAPHICS FUNCTIONS
 void updateShaders() {
     sf::Vector2f uMouse(sf::Mouse::getPosition());
-    float uTime = GameClock->getElapsedTime().asSeconds();
+    float uTime = GameTime.asSeconds();
     sf::Vector2f uPlayerPosition(player.hitbox.getCenter() - GameView.getCenter() + GameView.getSize() / 2.f);
 
     Shaders::Flashlight.setUniform("uMouse", player.lookDirection + uPlayerPosition);

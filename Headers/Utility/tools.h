@@ -28,7 +28,7 @@ std::string textWrap(std::string text, int wrapEvery) {
     for (int i = 0; i < text.size(); i++) {
         if (text[i] == '\n')
             charCount = 0;
-        if (charCount % wrapEvery == 0 and charCount != 0)
+        if (charCount % wrapEvery == 0 && charCount != 0)
             wrappedText.push_back('\n');
         wrappedText.push_back(text.at(i));
         charCount++;
