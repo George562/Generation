@@ -44,7 +44,7 @@ public:
     void move(Location* location) {
         float elapsedTime = std::min(TimeSinceLastFrame.asSeconds(), oneOverSixty);
         if (Velocity.x != 0 && Velocity.y != 0) {
-            sf::Vector2i res = WillCollisionWithWalls(location->wallsRect, hitbox, Velocity * elapsedTime);
+            sf::Vector2i res = WillCollideWithWalls(location->wallsRect, hitbox, Velocity * elapsedTime);
             if (res.x == -1 || res.y == -1) {
                 penetration--;
             }

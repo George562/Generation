@@ -407,7 +407,7 @@ void FindAllWaysTo(Location* location, std::vector<sf::Vector2f> to, std::vector
 }
 
 // {x = 1, y = -1} => collision at the y, up or down doesn't matter, because u know "dy" already
-sf::Vector2i WillCollisionWithWalls(vvr& Walls, CollisionShape& obj, sf::Vector2f Velocity) {
+sf::Vector2i WillCollideWithWalls(vvr& Walls, CollisionShape& obj, sf::Vector2f Velocity) {
     sf::Vector2i res(1, 1);
     obj.move(Velocity);
     for (int i = 0; i < Walls.size(); i++) {

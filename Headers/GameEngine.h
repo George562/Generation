@@ -1323,11 +1323,15 @@ void LevelGenerate(int n, int m) {
 
     clearVectorOfPointers(Enemies);
     Enemies.push_back(new Boss());
+    Enemies.back()->atTarget = true;
+    Enemies.back()->targetMode = TargetMode::wander;
+    Enemies.back()->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5);
     int amountOfEveryEnemiesOnLevel = curLevel + (curLevel > completedLevels ? 4 : 2);
     for (int i = 0; i < amountOfEveryEnemiesOnLevel; i++) {
         Enemies.push_back(new AngularBody(3 + rand() % 4));
         Enemies.back()->atTarget = true;
-        Enemies.back()->targetMode = TargetMode::rest;
+        Enemies.back()->targetMode = TargetMode::wander;
+        Enemies.back()->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5);
         // Enemies.push_back(new Distorted());
     }
     for (Enemy*& enemy : Enemies) DrawableStuff.push_back(enemy);
@@ -1524,34 +1528,74 @@ void updateEnemies() {
             }
             mutexOnDataChange.unlock();
             if (centers.size() > 0) {
+                std::cout << Enemies[i]->Name.getText() << " takes action: TARGET FOUND. ATTACKING.\n";
                 Enemies[i]->targetMode = TargetMode::pursuit;
                 Enemies[i]->VelocityBuff = 1.0;
                 Enemies[i]->setTarget(centers[0]);
                 for (int j = 1; j < centers.size(); j++)
-                    if (distance(Enemies[i]->hitbox.getCenter(), centers[j]) < distance(Enemies[i]->hitbox.getCenter(), Enemies[i]->target))
+                    if (distance(Enemies[i]->hitbox.getCenter(), centers[j]) < distance(Enemies[i]->hitbox.getCenter(), Enemies[i]->target)) {
                         Enemies[i]->setTarget(centers[j]);
+                        Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 2 * distance(Enemies[i]->hitbox.getCenter(), centers[j]) / Enemies[i]->MaxVelocity);
+                    }
                 Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->target - Enemies[i]->hitbox.getCenter(), Enemies[i]->faction);
             }
             else {
-                if (GameTime >= Enemies[i]->passiveWait && !Enemies[i]->atTarget) {
-                    Enemies[i]->targetMode = TargetMode::rest;
-                    Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 5);
-                    Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter());
-                    // std::cout << Enemies[i]->Name.getText() << " takes action: resting due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
-                    Enemies[i]->VelocityBuff = 0;
-                }
-                if (Enemies[i]->atTarget && GameTime < Enemies[i]->passiveWait) {
-                    Enemies[i]->targetMode = TargetMode::rest;
-                    // std::cout << Enemies[i]->Name.getText() << " takes action: resting until " << Enemies[i]->passiveWait.asSeconds() << "\n";
-                    Enemies[i]->VelocityBuff = 0;
-                }
-                if (GameTime >= Enemies[i]->passiveWait) {
-                    sf::Vector2f newTarget = sf::Vector2f(std::rand() % 2000 - 1000, std::rand() % 2000 - 1000);
-                    Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
-                    Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 3);
-                    Enemies[i]->targetMode = TargetMode::wander;
-                    // std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target.x << " " << Enemies[i]->target.y << "\n";
-                    Enemies[i]->VelocityBuff = 0.5;
+                float timeToTarget;
+                switch (Enemies[i]->targetMode)
+                {
+                    case TargetMode::sleep:
+                        break;
+                    case TargetMode::wander:
+                        // if (Enemies[i]->atTarget && GameTime < Enemies[i]->passiveWait) {
+                        //     Enemies[i]->targetMode = TargetMode::sleep;
+                        //     std::cout << Enemies[i]->Name.getText() << " takes action: resting until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                        // }
+                        if (GameTime >= Enemies[i]->passiveWait) {
+                            float targetX = std::rand() % (2 * size) - size, targetY = std::rand() % (2 * size) - size;
+                            sf::Vector2f newTarget;
+                            if (targetX < targetY)
+                                newTarget = sf::Vector2f(targetX, 0);
+                            else newTarget = sf::Vector2f(0, targetY);
+                            Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
+                            Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 3);
+                            Enemies[i]->targetMode = TargetMode::wander;
+                            std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target << "\n";
+                            Enemies[i]->VelocityBuff = 0.35;
+                        }
+                        break;
+                    case TargetMode::pursuit:
+                        if (GameTime >= Enemies[i]->passiveWait) {
+                            Enemies[i]->target = Enemies[i]->hitbox.getCenter();
+                        }
+                        if (Enemies[i]->atTarget) {
+                            Enemies[i]->targetMode = TargetMode::search;
+                            Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 15 + 15);
+                            std::cout << Enemies[i]->Name.getText() << " takes action: searching for target out of sight until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                        }
+                        break;
+                    case TargetMode::search:
+                        Enemies[i]->Velocity = normalize(Enemies[i]->target - Enemies[i]->hitbox.getCenter()) * Enemies[i]->MaxVelocity * Enemies[i]->VelocityBuff;
+                        if (Enemies[i]->atTarget || GameTime >= Enemies[i]->timeUntilNextSearch || length(Enemies[i]->Velocity) == 0) {
+                            sf::Vector2f newTarget;
+                            float targetX = std::rand() % (2 * size) - size, targetY = std::rand() % (2 * size) - size;
+                            if (abs(targetX) < abs(targetY))
+                                newTarget = sf::Vector2f(targetX, 0);
+                            else newTarget = sf::Vector2f(0, targetY);
+                            Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
+                            timeToTarget = distance(Enemies[i]->hitbox.getCenter(), Enemies[i]->target) / Enemies[i]->MaxVelocity;
+                            Enemies[i]->timeUntilNextSearch = sf::seconds(GameTime.asSeconds() + timeToTarget);
+                            std::cout << Enemies[i]->Name.getText() << " takes action: searching for target at " << newTarget
+                                      << ". Time left to search: " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                        }
+                        if (GameTime >= Enemies[i]->passiveWait) {
+                            Enemies[i]->targetMode = TargetMode::wander;
+                            Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + timeToTarget);
+                            Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter());
+                            std::cout << Enemies[i]->Name.getText() << " takes action: wandering due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
             Enemies[i]->move(CurLocation);

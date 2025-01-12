@@ -19,6 +19,8 @@ float length(sf::Vector2f v) {
 }
 
 sf::Vector2f normalize(sf::Vector2f v) {
+    if (length(v) == 0)
+        return v;
     return v / length(v);
 }
 // clamp by vector coordinates

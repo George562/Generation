@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////
 
 enum TargetMode {
-    rest,
+    sleep,
     wander,
     pursuit,
     search
@@ -35,6 +35,7 @@ public:
     sf::Vector2f target; // target point to move towards
     TargetMode targetMode = wander;
     bool atTarget = false;
+    sf::Time timeUntilNextSearch = sf::Time::Zero;
     sf::Time passiveWait = sf::Time::Zero;          // How long to wait before switching to another mode of targeting if not forced by attacking or other mechanics
                                                     // Will change during battle or rest to not make the input reading unfair or make the enemy too dumb
     bool makeADash = false;
@@ -92,7 +93,7 @@ public:
             if (length(Difference) >= Acceleration * ElapsedTimeAsSecond) {
                 sf::Vector2f Direction = sf::Vector2f(sign(Difference)) * Acceleration;
                 Velocity += Direction * ElapsedTimeAsSecond;
-            } else {
+            } else {    
                 Velocity += Difference;
             }
         } else {
@@ -100,13 +101,13 @@ public:
             makeADash = false;
         }
 
-        sf::Vector2i tempv = WillCollisionWithWalls(location->wallsRect, hitbox, Velocity * ElapsedTimeAsSecond);
+        sf::Vector2i tempv = WillCollideWithWalls(location->wallsRect, hitbox, Velocity * ElapsedTimeAsSecond);
 
         if (tempv.x == -1) Velocity.x = 0;
         if (tempv.y == -1) Velocity.y = 0;
 
         hitbox.move(Velocity * ElapsedTimeAsSecond);
-        atTarget = length(hitbox.getCenter() - target) < 1e-5;
+        atTarget = length(hitbox.getCenter() - target) < MaxVelocity / 4.;
     }
 
     virtual void shift(sf::Vector2f shift) {}
