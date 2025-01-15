@@ -33,6 +33,8 @@ public:
     float VelocityBuff;
     float Acceleration;
     sf::Vector2f target; // target point to move towards
+    sf::Vector2f lastTarget; // lastTarget point. Needed to not constantly backtrack
+    sf::Vector2f shootTarget; // Target to shoot at. Look direction may not correspond to shooting direction
     TargetMode targetMode = wander;
     bool atTarget = false;
     sf::Time timeUntilNextSearch = sf::Time::Zero;
