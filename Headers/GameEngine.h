@@ -1558,12 +1558,6 @@ void updateEnemies() {
                         Enemies[i]->shootTarget = centers[j];
                         Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 2 * distance(Enemies[i]->hitbox.getCenter(), centers[j]) / Enemies[i]->MaxVelocity);
                     }
-<<<<<<< HEAD
-                Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->target - Enemies[i]->hitbox.getCenter(), Enemies[i]->faction);
-            } else {
-                float timeToTarget;
-                switch (Enemies[i]->targetMode) {
-=======
                 sf::Vector2f playerTargetPos = Enemies[i]->target;
                 if (Enemies[i]->shootTarget == lastShootTarget)
                     Enemies[i]->target = Enemies[i]->lastTarget;
@@ -1583,24 +1577,16 @@ void updateEnemies() {
                 Enemies[i]->Velocity = normalize(Enemies[i]->target - Enemies[i]->hitbox.getCenter()) * Enemies[i]->MaxVelocity * Enemies[i]->VelocityBuff;
                 switch (Enemies[i]->targetMode)
                 {
->>>>>>> c1e6e98de2f1d98bda4277ee465e22144877598c
                     case TargetMode::sleep:
                         break;
                     case TargetMode::wander:
                         if (GameTime >= Enemies[i]->passiveWait) {
                             Enemies[i]->lastTarget = Enemies[i]->target;
                             sf::Vector2f newTarget;
-<<<<<<< HEAD
-                            if (abs(targetX) < abs(targetY))
-                                newTarget = sf::Vector2f(targetX, 0);
-                            else newTarget = sf::Vector2f(0, targetY);
-                            Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
-=======
                             do {
                                 newTarget = chooseCellCenter(Enemies[i], Enemies[i]->lastTarget);
                             } while (newTarget == Enemies[i]->lastTarget);
                             Enemies[i]->setTarget(newTarget);
->>>>>>> c1e6e98de2f1d98bda4277ee465e22144877598c
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 3);
                             Enemies[i]->targetMode = TargetMode::wander;
                             // std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target << "\n";
