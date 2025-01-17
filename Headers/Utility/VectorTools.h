@@ -45,13 +45,13 @@ void RotateOn(float phi, float& x, float& y) {
 sf::Vector2f RotateOn(float phi, sf::Vector2f a) {
     sf::Vector2f newA;
     newA.x =   a.x * cos(phi) + a.y * sin(phi);
-    newA.y = - a.x * sin(phi) + a.y * cos(phi);
+    newA.y = - a.x * sin(phi) + a.y * cos(phi); // FIXME:
     return newA;
 }
-std::vector<sf::Vector2f> RotateOn(float phi, std::vector<sf::Vector2f>& vec) {
+std::vector<sf::Vector2f> RotateOn(float phi, std::vector<sf::Vector2f> vec) {
     std::vector<sf::Vector2f> newVec;
     for (int i = 0; i < vec.size(); i++)
-        newVec.push_back(RotateOn(DegToRad(phi), vec[i]));
+        newVec.push_back(RotateOn(phi, vec[i]));
     return newVec;
 }
 

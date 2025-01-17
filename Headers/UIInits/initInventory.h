@@ -392,7 +392,7 @@ void initUpgradeShop() {
         targStats.parentTo(&BG);
 
         targetingBtn.setTexture(Textures::INVISIBLE, Textures::INVISIBLE);
-        std::vector<sf::Vector2f> rotatedFrustum = RotateOn(90, CommonShapes::frustumShape);
+        std::vector<sf::Vector2f> rotatedFrustum = RotateOn(DegToRad(90), CommonShapes::frustumShape);
         targetingBtn.setHitboxPoints(Translate({ 0, 150 }, rotatedFrustum));
         targetingBtn.hitbox.setScale({2. / 3., 2. / 3.});
         targetingBtn.enableShape(true);

@@ -665,17 +665,11 @@ CollisionRect CameraRect({ 0, 0, scw, sch });
 void drawWalls() {
     CameraPos = GameView.getCenter() - GameView.getSize() / 2.f;
     CameraRect.setPosition(CameraPos);
-    for (int i = std::max(0, 2 * int((CameraPos.y - WallMinSize / 2) / size));
-         i <= std::min(int(CurLocation->walls.size() - 1), 2 * int((CameraPos.y + sch + WallMinSize / 2) / size) + 1); i++) {
-        for (int j = std::max(0, int(CameraPos.x / size));
-             j <= std::min(int(CurLocation->walls[i].size() - 1), int((CameraPos.x + scw + WallMinSize) / size)); j++) {
-            if (CurLocation->walls[i][j]) {
-                CurLocation->SeenWalls[i][j] = CurLocation->SeenWalls[i][j] || CameraRect.intersect(CurLocation->wallsRect[i][j]);
-                WallRect.setPosition(CurLocation->wallsRect[i][j].getPosition());
-                WallRect.setTexture((i % 2 == 1) ? Textures::WallV : Textures::WallG, true);
-                preRenderTexture.draw(WallRect);
-            }
-        }
+    for (int i = 0; i < CurLocation->wallsRect.size(); i++) {
+        CurLocation->SeenWalls[i] = CurLocation->SeenWalls[i] || CameraRect.intersect(CurLocation->wallsRect[i]);
+        WallRect.setPosition(CurLocation->wallsRect[i].getPosition());
+        WallRect.setTexture((CurLocation->wallsRect[i].getSize().y == WallMaxSize) ? Textures::WallV : Textures::WallG, true);
+        preRenderTexture.draw(WallRect);
     }
 }
 
@@ -689,18 +683,18 @@ void drawMiniMap() {
     // draw walls
     window.setView(MiniMapView);
     sf::VertexArray line(sf::Lines, 2);
-    for (int i = 0; i < CurLocation->walls.size(); i++) {
-        for (int j = 0; j < CurLocation->walls[i].size(); j++) {
-            if (CurLocation->walls[i][j] && CurLocation->SeenWalls[i][j]) {
-                if (i % 2 == 1) { // |
-                    line[0] = sf::Vertex(sf::Vector2f(miniSize * j, miniSize * (i - 1) / 2), sf::Color::White);
-                    line[1] = sf::Vertex(sf::Vector2f(miniSize * j, miniSize * (i + 1) / 2), sf::Color::White);
-                } else { // -
-                    line[0] = sf::Vertex(sf::Vector2f(miniSize * j, miniSize * i / 2));
-                    line[1] = sf::Vertex(sf::Vector2f(miniSize * (j + 1), miniSize * i / 2));
-                }
-                window.draw(line);
+    for (int i = 0; i < CurLocation->SeenWalls.size(); i++) {
+        if (CurLocation->SeenWalls[i]) {
+            if (CurLocation->wallsRect[i].getSize().y == WallMaxSize) { // |
+                sf::Vector2f offset(WallMinSize / 2., 0.);
+                line[0] = sf::Vertex((CurLocation->wallsRect[i].getPoint(0) + offset) * ScaleParam, sf::Color::White);
+                line[1] = sf::Vertex((CurLocation->wallsRect[i].getPoint(3) + offset) * ScaleParam, sf::Color::White);
+            } else { // -
+                sf::Vector2f offset(0., WallMinSize / 2.);
+                line[0] = sf::Vertex((CurLocation->wallsRect[i].getPoint(0) + offset) * ScaleParam, sf::Color::White);
+                line[1] = sf::Vertex((CurLocation->wallsRect[i].getPoint(1) + offset) * ScaleParam, sf::Color::White);
             }
+            window.draw(line);
         }
     }
 
@@ -1315,6 +1309,10 @@ void LevelGenerate(int n, int m) {
     clearVectorOfPointers(listOfBox);
     clearVectorOfPointers(listOfArtifact);
     clearVectorOfPointers(listOfFire);
+    CollisionShapes.clear();
+    for (CollisionShape &wall: LabyrinthLocation.wallsRect) {
+        CollisionShapes.push_back(&wall);
+    }
     Interactable* x;
     for (int i = 0; i < 10; i++) { x = new Interactable(DescriptionID::box);      setInteractable(x); placeOnMap(x, m, n); }
     for (int i = 0; i < 10; i++) { x = new Interactable(DescriptionID::artifact); setInteractable(x); placeOnMap(x, m, n); }
@@ -1358,6 +1356,7 @@ void LoadMainMenu() {
     clearVectorOfPointers(listOfArtifact);
     clearVectorOfPointers(listOfFire);
     clearVectorOfPointers(PickupStuff);
+    CollisionShapes.clear();
     DrawableStuff.clear();
     InteractableStuff.clear();
 
@@ -1367,6 +1366,9 @@ void LoadMainMenu() {
     player.CurWeapon->lock = true;
 
     CurLocation = &MainMenuLocation;
+    for (CollisionShape &wall : CurLocation->wallsRect) {
+        CollisionShapes.push_back(&wall);
+    }
     curLevel = 0;
 
     player.hitbox.setCenter(3.5f * size, 2.5f * size);
@@ -1517,18 +1519,18 @@ void updateEnemies() {
             EnemyDie(i--);
         } else {
             std::vector<sf::Vector2f> centers;
-            if (player.isAlive() && CurLocation->ExistDirectWay(Enemies[i]->hitbox.getCenter(), player.hitbox.getCenter())) {
+            if (player.isAlive() && ExistDirectWay(Enemies[i]->hitbox, player.hitbox.getCenter())) {
                 centers.push_back(player.hitbox.getCenter());
                 // std::cout << "Enemy \"" << Enemies[i]->Name.getText() << "\" has found a direct way to the player\n";
             }
             mutexOnDataChange.lock();
             for (Player& p: ConnectedPlayers) {
-                if (p.isAlive() && CurLocation->ExistDirectWay(Enemies[i]->hitbox.getCenter(), p.hitbox.getCenter()))
+                if (p.isAlive() && ExistDirectWay(Enemies[i]->hitbox, p.hitbox.getCenter()))
                     centers.push_back(p.hitbox.getCenter());
             }
             mutexOnDataChange.unlock();
             if (centers.size() > 0) {
-                std::cout << Enemies[i]->Name.getText() << " takes action: TARGET FOUND. ATTACKING.\n";
+                // std::cout << Enemies[i]->Name.getText() << " takes action: TARGET FOUND. ATTACKING.\n";
                 Enemies[i]->targetMode = TargetMode::pursuit;
                 Enemies[i]->VelocityBuff = 1.0;
                 Enemies[i]->setTarget(centers[0]);
@@ -1538,11 +1540,9 @@ void updateEnemies() {
                         Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 2 * distance(Enemies[i]->hitbox.getCenter(), centers[j]) / Enemies[i]->MaxVelocity);
                     }
                 Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->target - Enemies[i]->hitbox.getCenter(), Enemies[i]->faction);
-            }
-            else {
+            } else {
                 float timeToTarget;
-                switch (Enemies[i]->targetMode)
-                {
+                switch (Enemies[i]->targetMode) {
                     case TargetMode::sleep:
                         break;
                     case TargetMode::wander:
@@ -1553,13 +1553,13 @@ void updateEnemies() {
                         if (GameTime >= Enemies[i]->passiveWait) {
                             float targetX = std::rand() % (2 * size) - size, targetY = std::rand() % (2 * size) - size;
                             sf::Vector2f newTarget;
-                            if (targetX < targetY)
+                            if (abs(targetX) < abs(targetY))
                                 newTarget = sf::Vector2f(targetX, 0);
                             else newTarget = sf::Vector2f(0, targetY);
                             Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 3);
                             Enemies[i]->targetMode = TargetMode::wander;
-                            std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target << "\n";
+                            // std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target << "\n";
                             Enemies[i]->VelocityBuff = 0.35;
                         }
                         break;
@@ -1570,7 +1570,7 @@ void updateEnemies() {
                         if (Enemies[i]->atTarget) {
                             Enemies[i]->targetMode = TargetMode::search;
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 15 + 15);
-                            std::cout << Enemies[i]->Name.getText() << " takes action: searching for target out of sight until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                            // std::cout << Enemies[i]->Name.getText() << " takes action: searching for target out of sight until " << Enemies[i]->passiveWait.asSeconds() << "\n";
                         }
                         break;
                     case TargetMode::search:
@@ -1584,14 +1584,14 @@ void updateEnemies() {
                             Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
                             timeToTarget = distance(Enemies[i]->hitbox.getCenter(), Enemies[i]->target) / Enemies[i]->MaxVelocity;
                             Enemies[i]->timeUntilNextSearch = sf::seconds(GameTime.asSeconds() + timeToTarget);
-                            std::cout << Enemies[i]->Name.getText() << " takes action: searching for target at " << newTarget
-                                      << ". Time left to search: " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                            // std::cout << Enemies[i]->Name.getText() << " takes action: searching for target at " << newTarget
+                            //           << ". Time left to search: " << Enemies[i]->passiveWait.asSeconds() << "\n";
                         }
                         if (GameTime >= Enemies[i]->passiveWait) {
                             Enemies[i]->targetMode = TargetMode::wander;
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + timeToTarget);
                             Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter());
-                            std::cout << Enemies[i]->Name.getText() << " takes action: wandering due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
+                            // std::cout << Enemies[i]->Name.getText() << " takes action: wandering due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
                         }
                         break;
                     default:
@@ -2407,6 +2407,10 @@ void funcOfClient() {
 
                             if (CurLocation != &LabyrinthLocation) {
                                 CurLocation = &LabyrinthLocation;
+                                CollisionShapes.clear();
+                                for (CollisionShape &wall : CurLocation->wallsRect) {
+                                    CollisionShapes.push_back(&wall);
+                                }
                             } else {
                                 completedLevels = std::max(curLevel, completedLevels);
                                 curLevel++;

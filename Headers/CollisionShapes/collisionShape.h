@@ -67,6 +67,7 @@ public:
     virtual void move(float x, float y)  { setPosition(position.x + x, position.y + y); }
     virtual void move(sf::Vector2f v)    { setPosition(position + v); }
 
+    void setPoint(size_t index, sf::Vector2f point) { points[index] = point; updateShape(); }
     sf::Vector2f getPoint(size_t index) const { return points[index]; }
     std::vector<sf::Vector2f> getPoints() const { return points; }
 
@@ -142,3 +143,5 @@ public:
         return s * std::sqrt(d);
     }
 };
+
+std::vector<CollisionShape*> CollisionShapes;

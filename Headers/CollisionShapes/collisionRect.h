@@ -52,8 +52,7 @@ public:
     sf::FloatRect getBounds() const { return sf::FloatRect(points[0], size); }
 };
 
-using vr = std::vector<CollisionRect>;
-using vvr = std::vector<vr>;
+using vvr = std::vector<std::vector<CollisionRect>>;
 
 sf::Packet& operator<<(sf::Packet& packet, CollisionRect& a) {
     return packet << a.getPosition().x << a.getPosition().y << a.getSize().x << a.getSize().y;

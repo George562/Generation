@@ -30,8 +30,8 @@ public:
     vvb EnableTiles;
     size_t AmountOfEnableTiles;
 
-    vvr wallsRect;
-    vvb SeenWalls;
+    std::vector<CollisionRect> wallsRect;
+    std::vector<bool> SeenWalls;
 
     Location() { AmountOfEnableTiles = 0; }
     Location(int w, int h) { SetSize(w, h); }
@@ -47,9 +47,7 @@ public:
     bool LoadFromFile(std::string FileName);
     bool WriteToFile(std::string FileName);
     void ClearSeenWalls() {
-        SeenWalls.assign(walls.size(), vb(0));
-        for (int i = 0; i < walls.size(); i++)
-            SeenWalls[i].assign(walls[i].size(), false);
+        SeenWalls.assign(wallsRect.size(), false);
     }
 };
 
@@ -64,7 +62,6 @@ void Location::SetSize(int NewN, int NewM) {
     for (int i = 0; i < walls.size(); i++) walls[i].assign(m + (i % 2), false);
     EnableTiles.assign(n, vb(m, false));
     AmountOfEnableTiles = 0;
-    ClearSeenWalls();
 }
 
 void Location::GenerateLocation(int n, int m, sf::Vector2f RootPoint) {
@@ -77,6 +74,7 @@ void Location::GenerateLocation(int n, int m, sf::Vector2f RootPoint) {
         CounterOfGenerations++;
     } while (AmountOfEnableTiles < float(n * m) * 0.3f || AmountOfEnableTiles > float(n * m) * 0.7f);
     FillWallsRect();
+    ClearSeenWalls();
     std::cout << "Location was generated in " << timer.getElapsedTime().asSeconds() << " seconds with total number of generations = "
               << CounterOfGenerations << "; Count Of Enable Tiles = " << AmountOfEnableTiles << '\n';
 }
@@ -114,7 +112,6 @@ void Location::WallGenerator(float probability) {
     }
 
     walls.back().assign(m, true);
-    ClearSeenWalls();
 }
 
 int Location::getPassagesAmount(int x, int y) {
@@ -156,17 +153,17 @@ void Location::FindEnableTilesFrom(sf::Vector2f p) {
 }
 
 void Location::FillWallsRect() {
-    wallsRect.assign(walls.size(), vr(0));
+    wallsRect.clear();
 
     for (int i = 0; i < walls.size(); i++)
         for (int j = 0; j < walls[i].size(); j++)
             if (walls[i][j]) {
                 if (i % 2 == 1) { // |
-                    wallsRect[i].push_back(CollisionRect(size * j - WallMinSize / 2, size * i / 2 - WallMaxSize / 2, WallMinSize, WallMaxSize));
+                    wallsRect.push_back(CollisionRect(size * j - WallMinSize / 2, size * i / 2 - WallMaxSize / 2, WallMinSize, WallMaxSize));
                 } else { // -
-                    wallsRect[i].push_back(CollisionRect(size * j, size * i / 2 - WallMinSize / 2, WallMaxSize, WallMinSize));
+                    wallsRect.push_back(CollisionRect(size * j, size * i / 2 - WallMinSize / 2, WallMaxSize, WallMinSize));
                 }
-            } else wallsRect[i].push_back(CollisionRect(0, 0, 0, 0));
+            }
 }
 
 bool Location::ExistDirectWay(sf::Vector2f from, sf::Vector2f to) {
@@ -406,20 +403,37 @@ void FindAllWaysTo(Location* location, std::vector<sf::Vector2f> to, std::vector
     }
 }
 
+bool ExistDirectWay(CollisionShape& shape, sf::Vector2f to) {
+    sf::Vector2f dir = to - shape.getCenter();
+    CollisionShape rect({
+        {-shape.getSize().x / 2.f, 0.f        },
+        { shape.getSize().x / 2.f, 0.f        },
+        { shape.getSize().x / 2.f, length(dir)},
+        {-shape.getSize().x / 2.f, length(dir)}
+    });
+    float phi = std::atan2(dir.x, dir.y);
+    rect.setPoints(RotateOn(phi, rect.getPoints()));
+    rect.move(shape.getCenter());
+    for (CollisionShape*& obj: CollisionShapes) {
+        if (obj != &shape && rect.intersect(*obj)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // {x = 1, y = -1} => collision at the y, up or down doesn't matter, because u know "dy" already
-sf::Vector2i WillCollideWithWalls(vvr& Walls, CollisionShape& obj, sf::Vector2f Velocity) {
+sf::Vector2i WillCollideWithWalls(std::vector<CollisionRect>& Walls, CollisionShape& obj, sf::Vector2f Velocity) {
     sf::Vector2i res(1, 1);
     obj.move(Velocity);
     for (int i = 0; i < Walls.size(); i++) {
-        for (int j = 0; j < Walls[i].size(); j++) {
-            if (Walls[i][j].intersect(obj)) {
-                obj.move(Velocity);
-                if (Walls[i][j].intersect(obj)) {
-                    res = {-1, -1};
-                }
-                obj.move(-Velocity);
-                break;
+        if (Walls[i].intersect(obj)) {
+            obj.move(Velocity);
+            if (Walls[i].intersect(obj)) {
+                res = {-1, -1};
             }
+            obj.move(-Velocity);
+            break;
         }
     }
     obj.move(-Velocity);
@@ -427,20 +441,16 @@ sf::Vector2i WillCollideWithWalls(vvr& Walls, CollisionShape& obj, sf::Vector2f 
         res = {1, 1};
         obj.move(0, Velocity.y);
         for (int i = 0; i < Walls.size(); i++) {
-            for (int j = 0; j < Walls[i].size(); j++) {
-                if (Walls[i][j].intersect(obj)) {
-                    res.y = -1;
-                    break;
-                }
+            if (Walls[i].intersect(obj)) {
+                res.y = -1;
+                break;
             }
         }
         obj.move(Velocity.x, -Velocity.y);
         for (int i = 0; i < Walls.size(); i++) {
-            for (int j = 0; j < Walls[i].size(); j++) {
-                if (Walls[i][j].intersect(obj)) {
-                    res.x = -1;
-                    break;
-                }
+            if (Walls[i].intersect(obj)) {
+                res.x = -1;
+                break;
             }
         }
         obj.move(-Velocity.x, 0);
