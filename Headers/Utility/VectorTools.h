@@ -19,6 +19,8 @@ float length(sf::Vector2f v) {
 }
 
 sf::Vector2f normalize(sf::Vector2f v) {
+    if (std::isnan(v.x) || std::isnan(v.y))
+        return sf::Vector2f(0, 0);
     if (length(v) == 0)
         return v;
     return v / length(v);
