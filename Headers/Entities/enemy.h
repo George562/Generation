@@ -1,8 +1,6 @@
 #pragma once
 #include "creature.h"
 
-std::vector<std::vector<sf::Vector2f>> TheWayToPlayer;
-
 ////////////////////////////////////////////////////////////
 // Enemy
 class Enemy : public Creature {
