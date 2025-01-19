@@ -106,7 +106,7 @@ public:
             makeADash = false;
         }
 
-        sf::Vector2i tempv = WillCollideWithWalls(location->wallsRect, hitbox, Velocity * ElapsedTimeAsSecond);
+        sf::Vector2i tempv = WillCollideWithWalls(hitbox, Velocity * ElapsedTimeAsSecond);
 
         if (tempv.x == -1) Velocity.x = 0;
         if (tempv.y == -1) Velocity.y = 0;

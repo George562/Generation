@@ -665,10 +665,10 @@ CollisionRect CameraRect({ 0, 0, scw, sch });
 void drawWalls() {
     CameraPos = GameView.getCenter() - GameView.getSize() / 2.f;
     CameraRect.setPosition(CameraPos);
-    for (int i = 0; i < CurLocation->wallsRect.size(); i++) {
-        CurLocation->SeenWalls[i] = CurLocation->SeenWalls[i] || CameraRect.intersect(CurLocation->wallsRect[i]);
-        WallRect.setPosition(CurLocation->wallsRect[i].getPosition());
-        WallRect.setTexture((CurLocation->wallsRect[i].getSize().y == WallMaxSize) ? Textures::WallV : Textures::WallG, true);
+    for (int i = 0; i < wallsRect.size(); i++) {
+        SeenWalls[i] = SeenWalls[i] || CameraRect.intersect(wallsRect[i]);
+        WallRect.setPosition(wallsRect[i].getPosition());
+        WallRect.setTexture((wallsRect[i].getSize().y == WallMaxSize) ? Textures::WallV : Textures::WallG, true);
         preRenderTexture.draw(WallRect);
     }
 }
@@ -683,16 +683,16 @@ void drawMiniMap() {
     // draw walls
     window.setView(MiniMapView);
     sf::VertexArray line(sf::Lines, 2);
-    for (int i = 0; i < CurLocation->SeenWalls.size(); i++) {
-        if (CurLocation->SeenWalls[i]) {
-            if (CurLocation->wallsRect[i].getSize().y == WallMaxSize) { // |
+    for (int i = 0; i < SeenWalls.size(); i++) {
+        if (SeenWalls[i]) {
+            if (wallsRect[i].getSize().y == WallMaxSize) { // |
                 sf::Vector2f offset(WallMinSize / 2., 0.);
-                line[0] = sf::Vertex((CurLocation->wallsRect[i].getPoint(0) + offset) * ScaleParam, sf::Color::White);
-                line[1] = sf::Vertex((CurLocation->wallsRect[i].getPoint(3) + offset) * ScaleParam, sf::Color::White);
+                line[0] = sf::Vertex((wallsRect[i].getPoint(0) + offset) * ScaleParam, sf::Color::White);
+                line[1] = sf::Vertex((wallsRect[i].getPoint(3) + offset) * ScaleParam, sf::Color::White);
             } else { // -
                 sf::Vector2f offset(0., WallMinSize / 2.);
-                line[0] = sf::Vertex((CurLocation->wallsRect[i].getPoint(0) + offset) * ScaleParam, sf::Color::White);
-                line[1] = sf::Vertex((CurLocation->wallsRect[i].getPoint(1) + offset) * ScaleParam, sf::Color::White);
+                line[0] = sf::Vertex((wallsRect[i].getPoint(0) + offset) * ScaleParam, sf::Color::White);
+                line[1] = sf::Vertex((wallsRect[i].getPoint(1) + offset) * ScaleParam, sf::Color::White);
             }
             window.draw(line);
         }
@@ -1310,7 +1310,7 @@ void LevelGenerate(int n, int m) {
     clearVectorOfPointers(listOfArtifact);
     clearVectorOfPointers(listOfFire);
     CollisionShapes.clear();
-    for (CollisionShape &wall: LabyrinthLocation.wallsRect) {
+    for (CollisionShape &wall: wallsRect) {
         CollisionShapes.push_back(&wall);
     }
     Interactable* x;
@@ -1366,7 +1366,9 @@ void LoadMainMenu() {
     player.CurWeapon->lock = true;
 
     CurLocation = &MainMenuLocation;
-    for (CollisionShape &wall : CurLocation->wallsRect) {
+    CurLocation->FillWallsRect();
+    CurLocation->ClearSeenWalls();
+    for (CollisionShape &wall : wallsRect) {
         CollisionShapes.push_back(&wall);
     }
     curLevel = 0;
@@ -2468,7 +2470,7 @@ void funcOfClient() {
                             if (CurLocation != &LabyrinthLocation) {
                                 CurLocation = &LabyrinthLocation;
                                 CollisionShapes.clear();
-                                for (CollisionShape &wall : CurLocation->wallsRect) {
+                                for (CollisionShape &wall : wallsRect) {
                                     CollisionShapes.push_back(&wall);
                                 }
                             } else {

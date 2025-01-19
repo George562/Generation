@@ -7,8 +7,6 @@ enum EnemyType {
     minibossBullethell
 };
 
-std::vector<std::vector<sf::Vector2f>> TheWayToPlayer;
-
 ////////////////////////////////////////////////////////////
 // Enemy
 class Enemy : public Creature {
