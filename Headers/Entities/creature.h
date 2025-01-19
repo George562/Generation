@@ -9,10 +9,11 @@
 ////////////////////////////////////////////////////////////
 
 enum TargetMode {
-    sleep,
-    wander,
-    pursuit,
-    search
+    sleep,          // Creature is completely inactive. Will react only to damage or special conditions
+    wander,         // Creature is wandering about the map. Can see the player and go to other target modes
+    search,         // Creature has lost the player out of sight and is actively searching for them
+    pursuit,        // Creature is trying to get into a fighting position against the player
+    fight           // Creature is actively attacking and obeying it's fighting behaviour
 };
 
 #pragma pack(push, 1)
@@ -76,6 +77,8 @@ public:
         }
     }
 
+    sf::Vector2f getCenter() const { return hitbox.getCenter(); }
+
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states = sf::RenderStates::Default) const {
         updateLook();
         if (animation != nullptr) {
@@ -90,7 +93,7 @@ public:
 
     virtual void move(Location* location) {
         float ElapsedTimeAsSecond = std::min(TimeSinceLastFrame.asSeconds(), oneOverSixty);
-        if (!makeADash) {
+        if (!makeADash && targetMode <= TargetMode::wander) {
             sf::Vector2f Difference = target - hitbox.getCenter() - Velocity;
             if (length(Difference) >= Acceleration * ElapsedTimeAsSecond) {
                 sf::Vector2f Direction = sf::Vector2f(sign(Difference)) * Acceleration;
@@ -107,7 +110,6 @@ public:
 
         if (tempv.x == -1) Velocity.x = 0;
         if (tempv.y == -1) Velocity.y = 0;
-
         hitbox.move(Velocity * ElapsedTimeAsSecond);
         atTarget = length(hitbox.getCenter() - target) < MaxVelocity / 4.;
     }

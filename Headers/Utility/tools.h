@@ -171,6 +171,19 @@ bool mouseButtonPressed(sf::Event event, sf::Mouse::Button button) {
     return event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == button;
 }
 
+// Gives a random float between -randSize and randSize. Range limits are integers
+float centerRand(int randSize) {
+    return (std::rand() % (2 * randSize)) - randSize;
+}
+
+sf::Vector2f centerRandVector(int randSize) {
+    return sf::Vector2f(centerRand(randSize), centerRand(randSize));
+}
+
+sf::Vector2f centerRandVector(sf::Vector2i randSizes) {
+    return sf::Vector2f(centerRand(randSizes.x), centerRand(randSizes.y));
+}
+
 sf::Vector2f operator*(sf::Vector2f a, sf::Vector2f b) {
     return sf::Vector2f(a.x * b.x, a.y * b.y);
 }

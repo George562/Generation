@@ -1,12 +1,19 @@
 #pragma once
 #include "creature.h"
 
+enum EnemyType {
+    meleeAngular,
+    rangedAngular,
+    minibossBullethell
+};
+
 std::vector<std::vector<sf::Vector2f>> TheWayToPlayer;
 
 ////////////////////////////////////////////////////////////
 // Enemy
 class Enemy : public Creature {
 public:
+    EnemyType enemyType;
     Enemy(std::string name) : Creature(name, faction::Enemy) {}
     ~Enemy() { if (CurWeapon) { delete CurWeapon; } }
     void updateLook() const override {
@@ -95,6 +102,7 @@ class AngularBody : public Enemy {
 public:
     float angles;
     AngularBody(float angles) : Enemy("Angular body") {
+        enemyType = EnemyType::rangedAngular;
         this->angles = angles;
 		Health = { {0, 5 + 2.5f * curLevel, 5 + 2.5f * curLevel} };
         HealthRecovery = 0.5;
@@ -126,6 +134,7 @@ public:
 class Boss : public Enemy {
 public:
     Boss() : Enemy("Big Bad Boss") {
+        enemyType = EnemyType::minibossBullethell;
 		Health = { {0, 15 + 2.5f * curLevel, 15 + 2.5f * curLevel} };
         HealthRecovery = 0.5;
 		Mana = { {0, 20, 20} };

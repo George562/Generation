@@ -438,7 +438,7 @@ void initScripts() {
             HUD::EscapeMenuActivated = false;
 
             MiniMapView.setViewport(sf::FloatRect(0.f, 0.f, 0.25f, 0.25f));
-            MiniMapView.setCenter(player.hitbox.getCenter() * ScaleParam);
+            MiniMapView.setCenter(player.getCenter() * ScaleParam);
 
             Musics::MainMenu.pause();
             if (Musics::Fight1.getStatus() != sf::Music::Playing && Musics::Fight2.getStatus() != sf::Music::Playing) {
@@ -448,7 +448,7 @@ void initScripts() {
                 CurLocation = &LabyrinthLocation;
             }
             LevelGenerate(START_N + curLevel, START_M + curLevel * 2);
-            // FindAllWaysTo(CurLocation, player.hitbox.getCenter(), TheWayToPlayer);
+            // FindAllWaysTo(CurLocation, player.getCenter(), TheWayToPlayer);
 
             DrawableStuff.push_back(&player);
             DrawableStuff.push_back(&portal);
@@ -586,13 +586,13 @@ void draw() {
         }
 
         for (Enemy*& enemy : Enemies) {
-            EnemyHealthBar.setPosition(enemy->hitbox.getCenter() - sf::Vector2f(EnemyHealthBar.getSize().x / 2.f, enemy->hitbox.getRadius() + 50.f));
+            EnemyHealthBar.setPosition(enemy->getCenter() - sf::Vector2f(EnemyHealthBar.getSize().x / 2.f, enemy->hitbox.getRadius() + 50.f));
             EnemyHealthBar.setValue(enemy->Health);
             preRenderTexture.draw(EnemyHealthBar);
         }
 
         for (Player& p : ConnectedPlayers) {
-            EnemyHealthBar.setPosition(p.hitbox.getCenter() - sf::Vector2f(EnemyHealthBar.getSize().x / 2.f, p.hitbox.getRadius() + 50.f));
+            EnemyHealthBar.setPosition(p.getCenter() - sf::Vector2f(EnemyHealthBar.getSize().x / 2.f, p.hitbox.getRadius() + 50.f));
             EnemyHealthBar.setValue(p.Health);
             preRenderTexture.draw(EnemyHealthBar);
         }
@@ -676,7 +676,7 @@ void drawWalls() {
 void drawMiniMap() {
     if (MiniMapHoldOnPlayer) {
         if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            MiniMapView.setCenter(player.hitbox.getCenter() * ScaleParam);
+            MiniMapView.setCenter(player.getCenter() * ScaleParam);
         }
     }
 
@@ -723,7 +723,7 @@ void drawMiniMap() {
             window.draw(MMPlayerCircle);
         }
     }
-    MMPlayerCircle.setPosition(player.hitbox.getCenter() * ScaleParam);
+    MMPlayerCircle.setPosition(player.getCenter() * ScaleParam);
     window.draw(MMPlayerCircle);
     window.setView(GameView);
 }
@@ -1302,9 +1302,9 @@ void LevelGenerate(int n, int m) {
     MiniMapZoom = std::pow(1.1, -10);
     MiniMapView.zoom(MiniMapZoom);
 
-    LabyrinthLocation.GenerateLocation(n, m, player.hitbox.getCenter() / float(size));
+    LabyrinthLocation.GenerateLocation(n, m, player.getCenter() / float(size));
 
-    portal.setCenter(player.hitbox.getCenter());
+    portal.setCenter(player.getCenter());
 
     clearVectorOfPointers(listOfBox);
     clearVectorOfPointers(listOfArtifact);
@@ -1337,9 +1337,9 @@ void LevelGenerate(int n, int m) {
     for (int i = 0; i < Enemies.size(); i++) {
         do {
             Enemies[i]->hitbox.setCenter(sf::Vector2f((std::rand() % m) + 0.5f, (std::rand() % n) + 0.5f) * (float)size);
-            Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter());
+            Enemies[i]->setTarget(Enemies[i]->getCenter());
         } while (!LabyrinthLocation.EnableTiles[(int)Enemies[i]->hitbox.getPosition().y / size][(int)Enemies[i]->hitbox.getPosition().x / size] ||
-                 distance(Enemies[i]->hitbox.getPosition(), player.hitbox.getCenter()) < size * 3);
+                 distance(Enemies[i]->hitbox.getPosition(), player.getCenter()) < size * 3);
     }
 }
 
@@ -1375,16 +1375,16 @@ void LoadMainMenu() {
     for (Player& p: ConnectedPlayers) {
         p.hitbox.setCenter(3.5f * size, 2.5f * size);
     }
-    // FindAllWaysTo(CurLocation, player.hitbox.getCenter(), TheWayToPlayer);
+    // FindAllWaysTo(CurLocation, player.getCenter(), TheWayToPlayer);
 
     portal.setPosition(1612.5, 1545);
     portal2.setPosition(1612.5 - size * 1.5, 1545);
 
-    CurLocation->FindEnableTilesFrom(player.hitbox.getCenter() / (float)size);
+    CurLocation->FindEnableTilesFrom(player.getCenter() / (float)size);
 
     // Set cameras
-    GameView.setCenter(player.hitbox.getCenter());
-    MiniMapView.setCenter(player.hitbox.getCenter() * ScaleParam);
+    GameView.setCenter(player.getCenter());
+    MiniMapView.setCenter(player.getCenter() * ScaleParam);
     HUDView.setCenter({ scw / 2.f, sch / 2.f });
 
     Musics::Fight1.stop();
@@ -1405,7 +1405,7 @@ void LoadMainMenu() {
     newItem->setAnimation(*itemTexture[ItemID::regenDrug]);
     PickupStuff.push_back(newItem);
     DrawableStuff.push_back(PickupStuff[0]);
-    PickupStuff[0]->dropTo(player.hitbox.getCenter() + sf::Vector2f(100, 100));
+    PickupStuff[0]->dropTo(player.getCenter() + sf::Vector2f(100, 100));
 
     Interactable* x = new Interactable(DescriptionID::box);
     setInteractable(x);
@@ -1514,7 +1514,7 @@ void EnemyDie(int i) {
 }
 
 sf::Vector2f chooseCellCenter(Enemy*& cr, sf::Vector2f lastTarget) {
-    sf::Vector2f targetCenter = cr->hitbox.getCenter();
+    sf::Vector2f targetCenter = cr->getCenter();
     sf::Vector2f lastTargetCenter = cr->lastTarget;
     float halfStep = size / 2;
     targetCenter.x = halfStep + size * round(targetCenter.x / size);
@@ -1534,47 +1534,77 @@ void updateEnemies() {
             EnemyDie(i--);
         } else {
             std::vector<sf::Vector2f> centers;
-            if (player.isAlive() && ExistDirectWay(Enemies[i]->hitbox, player.hitbox.getCenter())) {
-                centers.push_back(player.hitbox.getCenter());
+            if (player.isAlive() &&
+                ExistDirectWay(Enemies[i]->hitbox, player.getCenter()) &&
+                (length(Enemies[i]->getCenter() - player.getCenter()) <= 3 * size ||
+                 Enemies[i]->targetMode > TargetMode::wander)) {
+                centers.push_back(player.getCenter());
                 // std::cout << "Enemy \"" << Enemies[i]->Name.getText() << "\" has found a direct way to the player\n";
             }
             mutexOnDataChange.lock();
             for (Player& p: ConnectedPlayers) {
-                if (p.isAlive() && ExistDirectWay(Enemies[i]->hitbox, p.hitbox.getCenter()))
-                    centers.push_back(p.hitbox.getCenter());
+                if (p.isAlive() && ExistDirectWay(Enemies[i]->hitbox, p.getCenter()))
+                    centers.push_back(p.getCenter());
             }
             mutexOnDataChange.unlock();
             if (centers.size() > 0) {
                 // std::cout << Enemies[i]->Name.getText() << " takes action: TARGET FOUND. ATTACKING.\n";
-                Enemies[i]->targetMode = TargetMode::pursuit;
+                if (Enemies[i]->targetMode <= TargetMode::search)
+                    Enemies[i]->targetMode = TargetMode::pursuit;
                 Enemies[i]->VelocityBuff = 1.0;
-                Enemies[i]->lastTarget = Enemies[i]->target;
-                sf::Vector2f lastShootTarget = Enemies[i]->shootTarget;
-                Enemies[i]->setTarget(centers[0]);
                 Enemies[i]->shootTarget = centers[0];
                 for (int j = 1; j < centers.size(); j++)
-                    if (distance(Enemies[i]->hitbox.getCenter(), centers[j]) < distance(Enemies[i]->hitbox.getCenter(), Enemies[i]->target)) {
-                        Enemies[i]->setTarget(centers[j]);
+                    if (distance(Enemies[i]->getCenter(), centers[j]) < distance(Enemies[i]->getCenter(), Enemies[i]->target)) {
                         Enemies[i]->shootTarget = centers[j];
-                        Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 2 * distance(Enemies[i]->hitbox.getCenter(), centers[j]) / Enemies[i]->MaxVelocity);
+                        Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 2 * distance(Enemies[i]->getCenter(), centers[j]) / Enemies[i]->MaxVelocity);
                     }
-                sf::Vector2f playerTargetPos = Enemies[i]->target;
-                if (Enemies[i]->shootTarget == lastShootTarget)
-                    Enemies[i]->target = Enemies[i]->lastTarget;
-                else {
-                    float targetEnemyDistDiff = length(Enemies[i]->hitbox.getCenter() - playerTargetPos);
-                    float distRange = size;
-                    float distEps = size / 8;
-                    if (abs(targetEnemyDistDiff - distRange) > distEps) {
-                        float posCoef = distRange / targetEnemyDistDiff;
-                        Enemies[i]->target = posCoef * Enemies[i]->hitbox.getCenter() + (1 - posCoef) * playerTargetPos;
-                    }
+                sf::Vector2f playerTargetPos = Enemies[i]->shootTarget;
+                float attackArea = size / 4.;
+                float targetEnemyDistDiff = length(Enemies[i]->getCenter() - playerTargetPos);
+                float distRange = 3 / 2 * size;
+                switch (Enemies[i]->targetMode)
+                {
+                    case TargetMode::pursuit:
+                        // EnemyType if-else is Placeholder.
+                        // Will be changed to a proper Enemy class behaviour fuinction
+                        if (Enemies[i]->enemyType == EnemyType::minibossBullethell) {
+                            Enemies[i]->setTarget(Enemies[i]->shootTarget);
+                            Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->shootTarget - Enemies[i]->getCenter(), Enemies[i]->faction);
+                        }
+                        else {
+                            if (abs(targetEnemyDistDiff - distRange) <= attackArea / 4) {
+                                Enemies[i]->targetMode = TargetMode::fight;
+                                Enemies[i]->passiveWait = GameTime;
+                            } else {
+                                float posCoef = distRange / targetEnemyDistDiff;
+                                sf::Vector2f targetPoint = posCoef * Enemies[i]->getCenter() + (1 - posCoef) * playerTargetPos;
+                                Enemies[i]->setTarget(targetPoint);
+                            }
+                        }
+                        break;
+                    case TargetMode::fight:
+                        Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->shootTarget - Enemies[i]->getCenter(), Enemies[i]->faction);
+                        if (length(Enemies[i]->getCenter() - Enemies[i]->target) <= attackArea / 4) {
+                            Enemies[i]->setTarget(Enemies[i]->getCenter());
+                        }
+                        if (GameTime > Enemies[i]->passiveWait &&
+                            (targetEnemyDistDiff - distRange > attackArea * 2 ||
+                            targetEnemyDistDiff <= attackArea / 2)) {
+                            Enemies[i]->targetMode = TargetMode::pursuit;
+                        }
+                        if (GameTime > Enemies[i]->passiveWait) {
+                            float increment = size / 8;
+                            sf::Vector2f randomOffset = increment * centerRandVector(4);
+                            Enemies[i]->setTarget(Enemies[i]->target + randomOffset);
+                            Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 1. / 3.);
+                        }
+                        break;
                 }
-                Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->shootTarget - Enemies[i]->hitbox.getCenter(), Enemies[i]->faction);
             }
             else {
                 float timeToTarget;
-                Enemies[i]->Velocity = normalize(Enemies[i]->target - Enemies[i]->hitbox.getCenter()) * Enemies[i]->MaxVelocity * Enemies[i]->VelocityBuff;
+                if (Enemies[i]->targetMode == TargetMode::fight)
+                    Enemies[i]->targetMode = TargetMode::pursuit;
                 switch (Enemies[i]->targetMode)
                 {
                     case TargetMode::sleep:
@@ -1594,8 +1624,9 @@ void updateEnemies() {
                         }
                         break;
                     case TargetMode::pursuit:
+                        Enemies[i]->setTarget(Enemies[i]->shootTarget);
                         if (GameTime >= Enemies[i]->passiveWait || length(Enemies[i]->Velocity) <= 2) {
-                            Enemies[i]->target = Enemies[i]->hitbox.getCenter();
+                            Enemies[i]->setTarget(Enemies[i]->getCenter());
                         }
                         if (Enemies[i]->atTarget) {
                             Enemies[i]->targetMode = TargetMode::search;
@@ -1610,8 +1641,8 @@ void updateEnemies() {
                             if (abs(targetX) < abs(targetY))
                                 newTarget = sf::Vector2f(targetX, 0);
                             else newTarget = sf::Vector2f(0, targetY);
-                            Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter() + newTarget);
-                            timeToTarget = distance(Enemies[i]->hitbox.getCenter(), Enemies[i]->target) / Enemies[i]->MaxVelocity;
+                            Enemies[i]->setTarget(Enemies[i]->getCenter() + newTarget);
+                            timeToTarget = distance(Enemies[i]->getCenter(), Enemies[i]->target) / Enemies[i]->MaxVelocity;
                             Enemies[i]->timeUntilNextSearch = sf::seconds(GameTime.asSeconds() + timeToTarget);
                             // std::cout << Enemies[i]->Name.getText() << " takes action: searching for target at " << newTarget
                             //           << ". Time left to search: " << Enemies[i]->passiveWait.asSeconds() << "\n";
@@ -1619,7 +1650,7 @@ void updateEnemies() {
                         if (GameTime >= Enemies[i]->passiveWait) {
                             Enemies[i]->targetMode = TargetMode::wander;
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + timeToTarget);
-                            Enemies[i]->setTarget(Enemies[i]->hitbox.getCenter());
+                            Enemies[i]->setTarget(Enemies[i]->getCenter());
                             // std::cout << Enemies[i]->Name.getText() << " takes action: wandering due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
                         }
                         break;
@@ -1902,7 +1933,7 @@ bool useItem(Item*& item) {
 void updateShaders() {
     sf::Vector2f uMouse(sf::Mouse::getPosition());
     float uTime = GameTime.asSeconds();
-    sf::Vector2f uPlayerPosition(player.hitbox.getCenter() - GameView.getCenter() + GameView.getSize() / 2.f);
+    sf::Vector2f uPlayerPosition(player.getCenter() - GameView.getCenter() + GameView.getSize() / 2.f);
 
     Shaders::Flashlight.setUniform("uMouse", player.lookDirection + uPlayerPosition);
     Shaders::Flashlight.setUniform("uPlayerPosition", uPlayerPosition);
@@ -2101,8 +2132,8 @@ void MainLoop() {
             if (!chat.inputted && !inventoryInterface::isDrawInventory && !MenuShop::isDrawShop) {
                 if (player.isAlive()) {
                     player.move(CurLocation);
-                    GameView.setCenter(player.hitbox.getCenter() + static_cast<sf::Vector2f>((sf::Mouse::getPosition() - sf::Vector2i(scw, sch) / 2) / 8));
-                    sf::Listener::setPosition(player.hitbox.getCenter().x, player.hitbox.getCenter().y, 50.f);
+                    GameView.setCenter(player.getCenter() + static_cast<sf::Vector2f>((sf::Mouse::getPosition() - sf::Vector2i(scw, sch) / 2) / 8));
+                    sf::Listener::setPosition(player.getCenter().x, player.getCenter().y, 50.f);
                 }
                 if (!ClientFuncRun) {
                     mutexOnDataChange.lock();
@@ -2110,10 +2141,10 @@ void MainLoop() {
                     for (int i = 0, k = 0; i < ConnectedPlayers.size() + 1; i++) {
                         if (i != ComputerID) {
                             if (ConnectedPlayers[i - k].isAlive()) {
-                                centers.push_back(ConnectedPlayers[i - k].hitbox.getCenter());
+                                centers.push_back(ConnectedPlayers[i - k].getCenter());
                             }
                         } else if (player.isAlive()) {
-                            centers.push_back(player.hitbox.getCenter());
+                            centers.push_back(player.getCenter());
                             k++;
                         }
                     }
@@ -2427,7 +2458,7 @@ void funcOfClient() {
                             HUD::EscapeMenuActivated = false;
 
                             MiniMapView.setViewport(sf::FloatRect(0.f, 0.f, 0.25f, 0.25f));
-                            MiniMapView.setCenter(player.hitbox.getCenter() * ScaleParam);
+                            MiniMapView.setCenter(player.getCenter() * ScaleParam);
 
                             Musics::MainMenu.pause();
                             if (Musics::Fight1.getStatus() != sf::Music::Playing && Musics::Fight2.getStatus() != sf::Music::Playing) {
@@ -2448,7 +2479,7 @@ void funcOfClient() {
                             MiniMapZoom = std::pow(1.1, -10);
                             MiniMapView.zoom(MiniMapZoom);
                             ReceivePacket >> &LabyrinthLocation;
-                            // FindAllWaysTo(CurLocation, player.hitbox.getCenter(), TheWayToPlayer);
+                            // FindAllWaysTo(CurLocation, player.getCenter(), TheWayToPlayer);
                             ReceivePacket >> i32PacketData; clearVectorOfPointers(Enemies);
                             for (int i = 0; i < i32PacketData; i++) {
                                 ReceivePacket >> sPacketData;
@@ -2469,7 +2500,7 @@ void funcOfClient() {
                             }
                             ReceivePacket >> &portal >> player;
 
-                            CurLocation->FindEnableTilesFrom(player.hitbox.getCenter() / (float)size);
+                            CurLocation->FindEnableTilesFrom(player.getCenter() / (float)size);
 
                             placeOnMap(&portal);
 
