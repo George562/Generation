@@ -35,11 +35,9 @@ public:
     float Acceleration;
     sf::Vector2f target; // target point to move towards
     sf::Vector2f lastTarget; // lastTarget point. Needed to not constantly backtrack
-    sf::Vector2f shootTarget; // Target to shoot at. Look direction may not correspond to shooting direction
     TargetMode targetMode = wander;
     bool atTarget = false;
-    sf::Time timeUntilNextSearch = sf::Time::Zero;
-    sf::Time passiveWait = sf::Time::Zero;          // How long to wait before switching to another mode of targeting if not forced by attacking or other mechanics
+    sf::Time passiveWait = sf::Time::Zero;          // A timer for keeping track of waits between different actions like switching modes, ai actions, etc
                                                     // Will change during battle or rest to not make the input reading unfair or make the enemy too dumb
     bool makeADash = false;
     mutable sf::Vector2f lookDirection = {1.f, 0.f};

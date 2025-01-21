@@ -12,6 +12,8 @@ enum EnemyType {
 class Enemy : public Creature {
 public:
     EnemyType enemyType;
+    sf::Vector2f shootTarget; // Target to shoot at. Look direction may not correspond to shooting direction
+    sf::Time timeUntilNextSearch = sf::Time::Zero;  // This timer determintes how much to wait until searching for the player at another point
     Enemy(std::string name) : Creature(name, faction::Enemy) {}
     ~Enemy() { if (CurWeapon) { delete CurWeapon; } }
     void updateLook() const override {

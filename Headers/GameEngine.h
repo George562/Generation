@@ -1515,18 +1515,15 @@ void EnemyDie(int i) {
     mutexOnDataChange.unlock();
 }
 
-sf::Vector2f chooseCellCenter(Enemy*& cr, sf::Vector2f lastTarget) {
+sf::Vector2f chooseCellCenter(Enemy*& cr) {
     sf::Vector2f targetCenter = cr->getCenter();
-    sf::Vector2f lastTargetCenter = cr->lastTarget;
-    float halfStep = size / 2;
-    targetCenter.x = halfStep + size * round(targetCenter.x / size);
-    targetCenter.y = halfStep + size * round(targetCenter.y / size);
-    int axis = std::rand() % 2 == 0 ? 1 : -1;
+    targetCenter.x = size / 2 + size * round(targetCenter.x / size);
+    targetCenter.y = size / 2 + size * round(targetCenter.y / size);
     int dirX = 0, dirY = 0;
-    if (axis == -1)
-        dirX = std::rand() % 2 == 0 ? 1 : -1;
-    else
-        dirY = std::rand() % 2 == 0 ? 1 : -1;
+    rand();
+    int axis = std::rand() % 2 == 0 ? 1 : -1;
+    if (axis == -1) dirX = std::rand() % 2 == 0 ? 1 : -1;
+    else dirY = std::rand() % 2 == 0 ? 1 : -1;
     return targetCenter + sf::Vector2f(dirX * size, dirY * size);
 }
 
@@ -1541,7 +1538,6 @@ void updateEnemies() {
                 (length(Enemies[i]->getCenter() - player.getCenter()) <= 3 * size ||
                  Enemies[i]->targetMode > TargetMode::wander)) {
                 centers.push_back(player.getCenter());
-                // std::cout << "Enemy \"" << Enemies[i]->Name.getText() << "\" has found a direct way to the player\n";
             }
             mutexOnDataChange.lock();
             for (Player& p: ConnectedPlayers) {
@@ -1550,7 +1546,6 @@ void updateEnemies() {
             }
             mutexOnDataChange.unlock();
             if (centers.size() > 0) {
-                // std::cout << Enemies[i]->Name.getText() << " takes action: TARGET FOUND. ATTACKING.\n";
                 if (Enemies[i]->targetMode <= TargetMode::search)
                     Enemies[i]->targetMode = TargetMode::pursuit;
                 Enemies[i]->VelocityBuff = 1.0;
@@ -1572,8 +1567,7 @@ void updateEnemies() {
                         if (Enemies[i]->enemyType == EnemyType::minibossBullethell) {
                             Enemies[i]->setTarget(Enemies[i]->shootTarget);
                             Enemies[i]->CurWeapon->Shoot(Enemies[i]->hitbox, Enemies[i]->shootTarget - Enemies[i]->getCenter(), Enemies[i]->faction);
-                        }
-                        else {
+                        } else {
                             if (abs(targetEnemyDistDiff - distRange) <= attackArea / 4) {
                                 Enemies[i]->targetMode = TargetMode::fight;
                                 Enemies[i]->passiveWait = GameTime;
@@ -1589,21 +1583,28 @@ void updateEnemies() {
                         if (length(Enemies[i]->getCenter() - Enemies[i]->target) <= attackArea / 4) {
                             Enemies[i]->setTarget(Enemies[i]->getCenter());
                         }
-                        if (GameTime > Enemies[i]->passiveWait &&
-                            (targetEnemyDistDiff - distRange > attackArea * 2 ||
-                            targetEnemyDistDiff <= attackArea / 2)) {
+
+                        bool isInsideFightingRange = targetEnemyDistDiff - distRange <= attackArea * 2 &&
+                                                     targetEnemyDistDiff >= attackArea / 2;
+                        if (!isInsideFightingRange) {
                             Enemies[i]->targetMode = TargetMode::pursuit;
+                            break;
                         }
                         if (GameTime > Enemies[i]->passiveWait) {
                             float increment = size / 8;
                             sf::Vector2f randomOffset = increment * centerRandVector(4);
-                            Enemies[i]->setTarget(Enemies[i]->target + randomOffset);
+                            CollisionCircle futureHitbox = Enemies[i]->hitbox;
+                            futureHitbox.setCenter(Enemies[i]->target + randomOffset);
+                            targetEnemyDistDiff = length(Enemies[i]->target + randomOffset - playerTargetPos);
+                            isInsideFightingRange = targetEnemyDistDiff - distRange <= attackArea * 2 &&
+                                                    targetEnemyDistDiff >= attackArea / 2;
+                            if (ExistDirectWay(futureHitbox, player.getCenter()) && isInsideFightingRange)
+                                Enemies[i]->setTarget(Enemies[i]->target + randomOffset);
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 1. / 3.);
                         }
                         break;
                 }
-            }
-            else {
+            } else {
                 float timeToTarget;
                 if (Enemies[i]->targetMode == TargetMode::fight)
                     Enemies[i]->targetMode = TargetMode::pursuit;
@@ -1616,12 +1617,11 @@ void updateEnemies() {
                             Enemies[i]->lastTarget = Enemies[i]->target;
                             sf::Vector2f newTarget;
                             do {
-                                newTarget = chooseCellCenter(Enemies[i], Enemies[i]->lastTarget);
+                                newTarget = chooseCellCenter(Enemies[i]);
                             } while (newTarget == Enemies[i]->lastTarget);
                             Enemies[i]->setTarget(newTarget);
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 3);
                             Enemies[i]->targetMode = TargetMode::wander;
-                            // std::cout << Enemies[i]->Name.getText() << " takes action: wander to " << Enemies[i]->target << "\n";
                             Enemies[i]->VelocityBuff = 0.35;
                         }
                         break;
@@ -1633,27 +1633,20 @@ void updateEnemies() {
                         if (Enemies[i]->atTarget) {
                             Enemies[i]->targetMode = TargetMode::search;
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 15 + 15);
-                            // std::cout << Enemies[i]->Name.getText() << " takes action: searching for target out of sight until " << Enemies[i]->passiveWait.asSeconds() << "\n";
                         }
                         break;
                     case TargetMode::search:
                         if (Enemies[i]->atTarget || GameTime >= Enemies[i]->timeUntilNextSearch || length(Enemies[i]->Velocity) <= 2) {
                             sf::Vector2f newTarget;
-                            float targetX = std::rand() % (2 * size) - size, targetY = std::rand() % (2 * size) - size;
-                            if (abs(targetX) < abs(targetY))
-                                newTarget = sf::Vector2f(targetX, 0);
-                            else newTarget = sf::Vector2f(0, targetY);
-                            Enemies[i]->setTarget(Enemies[i]->getCenter() + newTarget);
+                            newTarget = chooseCellCenter(Enemies[i]);
+                            Enemies[i]->setTarget(newTarget);
                             timeToTarget = distance(Enemies[i]->getCenter(), Enemies[i]->target) / Enemies[i]->MaxVelocity;
                             Enemies[i]->timeUntilNextSearch = sf::seconds(GameTime.asSeconds() + timeToTarget);
-                            // std::cout << Enemies[i]->Name.getText() << " takes action: searching for target at " << newTarget
-                            //           << ". Time left to search: " << Enemies[i]->passiveWait.asSeconds() << "\n";
                         }
                         if (GameTime >= Enemies[i]->passiveWait) {
                             Enemies[i]->targetMode = TargetMode::wander;
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + timeToTarget);
                             Enemies[i]->setTarget(Enemies[i]->getCenter());
-                            // std::cout << Enemies[i]->Name.getText() << " takes action: wandering due to not finding target until " << Enemies[i]->passiveWait.asSeconds() << "\n";
                         }
                         break;
                     default:
