@@ -223,7 +223,7 @@ void init() {
     loadMusics();
     loadSoundBuffers();
     loadSave();
-    loadDescriptions();
+    HUD::loadDescriptions();
 
     icon.loadFromFile("sources/icon.png");
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
@@ -293,10 +293,10 @@ void init() {
     undergroundBG.setPosition(0, 0);
     undergroundBG.setScale(scw / undergroundBG.getLocalBounds().width, sch / undergroundBG.getLocalBounds().height);
 
-    initHUD(&player, &Weapons);
-    initInventory(&player);
-    initUpgradeShop();
-    initShop(&player);
+    HUD::initHUD(player, Weapons);
+    inventoryInterface::initInventory(player);
+    upgradeInterface::initUpgradeInterface();
+    MenuShop::initShop(player);
     initMinimap();
     initScripts();
 
@@ -540,11 +540,11 @@ void draw() {
     window.clear(sf::Color::Transparent);
     updateShaders();
     if (inventoryInterface::isDrawInventory) {
-        drawInventory(window, player);
+        inventoryInterface::drawInventory(window, player);
     } else if (MenuShop::isDrawShop) {
-        drawShop(window, player);
+        MenuShop::drawShop(window, player);
     } else if (upgradeInterface::isDrawUpgradeInterface) {
-        drawUpgradeInterface(window, player);
+        upgradeInterface::drawUpgradeInterface(window, player);
     } else {
         preRenderTexture.clear(sf::Color::Transparent);
         preRenderTexture.setView(HUDView);
@@ -620,7 +620,7 @@ void draw() {
             drawMiniMap();
         }
         if (HUD::IsDrawHUD) {
-            drawHUD(window, player, &Weapons);
+            HUD::drawHUD(window, player, Weapons);
         }
     }
     window.display();

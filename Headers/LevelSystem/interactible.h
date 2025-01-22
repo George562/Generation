@@ -19,7 +19,9 @@ namespace DescriptionID {
     };
 }
 
-void displayDescription(DescriptionID::Type);
+namespace HUD {
+    void displayDescription(DescriptionID::Type);
+}
 
 ////////////////////////////////////////////////////////////
 // Class
@@ -51,7 +53,7 @@ public:
             return true;
         }
         if (keyPressed(event, InformationButton)) {
-            displayDescription(descriptionID);
+            HUD::displayDescription(descriptionID);
         }
         return false;
     }

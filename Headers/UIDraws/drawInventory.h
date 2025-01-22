@@ -30,60 +30,53 @@ void upgradeInterface::drawChoosingComponent(sf::RenderWindow& window) {
     }
 }
 
-void drawInventory(sf::RenderWindow& window, Player& player) {
+void inventoryInterface::drawInventory(sf::RenderWindow& window, Player& player) {
     window.setView(InventoryView);
-    {
-        using namespace inventoryInterface;
-        updateInventoryUI(player);
+    updateInventoryUI(player);
 
-        for (sf::Drawable*& elem : commonElements)
-            window.draw(*elem);
-        switch (activePage) {
-            case inventoryPage::Items:
-                for (sf::Drawable*& elem : pageElements[activePage])
-                    window.draw(*elem);
+    for (sf::Drawable*& elem : commonElements)
+        window.draw(*elem);
+    switch (activePage) {
+        case inventoryPage::Items:
+            for (sf::Drawable*& elem : pageElements[activePage])
+                window.draw(*elem);
 
-                for (Item*& item : player.inventory.items) {
-                    window.draw(itemSlotsElements[item->id]);
-                    window.draw(*item);
-                }
+            for (Item*& item : player.inventory.items) {
+                window.draw(itemSlotsElements[item->id]);
+                window.draw(*item);
+            }
 
-                if (isItemDescDrawn) {
-                    itemDescText.setPosition(sf::Mouse::getPosition(window).x + 100, sf::Mouse::getPosition(window).y);
-                    window.draw(itemDescText);
-                }
-                break;
+            if (isItemDescDrawn) {
+                itemDescText.setPosition(sf::Mouse::getPosition(window).x + 100, sf::Mouse::getPosition(window).y);
+                window.draw(itemDescText);
+            }
+            break;
 
-            case inventoryPage::Weapons:
-                for (sf::Drawable*& elem : pageElements[activePage])
-                    window.draw(*elem);
-                break;
+        case inventoryPage::Weapons:
+            for (sf::Drawable*& elem : pageElements[activePage])
+                window.draw(*elem);
+            break;
 
-            case inventoryPage::Stats:
-                for (sf::Drawable*& elem : pageElements[inventoryPage::Stats])
-                    window.draw(*elem);
-                break;
+        case inventoryPage::Stats:
+            for (sf::Drawable*& elem : pageElements[inventoryPage::Stats])
+                window.draw(*elem);
+            break;
 
-            default:
-                break;
-        }
+        default:
+            break;
     }
     window.setView(HUDView);
 }
 
-void drawUpgradeInterface(sf::RenderWindow& window, Player& player) {
+void upgradeInterface::drawUpgradeInterface(sf::RenderWindow& window, Player& player) {
     window.setView(InterfaceView);
-    {
-        using namespace upgradeInterface;
+    updateUpgradeInterfaceUI(player);
+    for (sf::Drawable*& elem : UIElements) // not working
+        window.draw(*elem);
 
-        upgradeInterface::updateUpgradeInterfaceUI(player);
-        for (sf::Drawable*& elem : upgradeInterface::UIElements) // not working
-            window.draw(*elem);
+    drawChoosingComponent(window);
 
-        drawChoosingComponent(window);
-
-        window.draw(upgradeInterface::coinSprite);
-        window.draw(upgradeInterface::playerCoinAmount);
-    }
+    window.draw(coinSprite);
+    window.draw(playerCoinAmount);
     window.setView(HUDView);
 }
