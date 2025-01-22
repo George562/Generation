@@ -42,6 +42,64 @@ namespace MenuShop {
     PlacedText NPCText("shop_NPCText", UI::R, UI::L);
     PlacedText itemStatsText("shop_ItemStats", UI::R, UI::L);
     PlacedText playerCoinsText("shop_PlCoinsText", UI::T, UI::B);
+
+    void updateShopUI(Player& player) {
+        int slotNumber = 0;
+        unsigned int offsetLarge = 200;
+        unsigned int offsetSmall = 50;
+        unsigned int slotSize = 100;
+        for (Item*& drawnItem : shop.soldItems.items) {
+            drawnItem->animation->setScale({ 0.5, 0.5 });
+
+            float itemX = (slotNumber % 5) * offsetLarge + offsetSmall;
+            float itemY = (slotNumber / 5) * offsetLarge + offsetSmall;
+
+            ShopSlot* slot = &slotsElements[drawnItem->id];
+            if (!slotsElements[drawnItem->id].isInitialized) {
+                slot->init("mShop_ItemIDSlot" + drawnItem->id);
+            }
+            slot->amountText->setFontString(FontString(std::to_string(drawnItem->amount), 20));
+            slot->setSize({ slotSize, slotSize });
+            slot->setTexture(Textures::ItemPanel, UI::element);
+            slot->setPosition(itemX, itemY);
+
+            drawnItem->animation->moveToAnchor(slot, UI::center, UI::center);
+
+
+            PlacedText& itemPriceText = *slot->priceText;
+            itemPriceText.setFontString(
+                FontString(std::to_string(shop.itemPrices[drawnItem->id]) + " C", 20)
+            );
+
+            slotNumber++;
+        }
+
+        slotNumber = 0;
+        for (Item*& drawnItem : player.inventory.items) {
+            drawnItem->animation->setScale({ 0.5, 0.5 });
+
+            float itemX = (slotNumber % 3) * offsetLarge + offsetSmall;
+            float itemY = (slotNumber / 3) * offsetLarge + offsetSmall;
+
+            ShopSlot* pslot = &playerSlotsElements[drawnItem->id];
+            if (!pslot->isInitialized) {
+                pslot->init("mShop_PlItemIDSlot" + drawnItem->id);
+            }
+            pslot->amountText->setFontString(FontString(std::to_string(drawnItem->amount), 20));
+
+            pslot->priceText->setFontString(
+                FontString(std::to_string(shop.itemPrices[drawnItem->id]) + " C", 20)
+            );
+
+            pslot->setSize({ slotSize, slotSize });
+            pslot->setTexture(Textures::ItemPanel, UI::element);
+            pslot->setPosition(itemX, itemY);
+
+            drawnItem->animation->moveToAnchor(pslot, UI::center, UI::center);
+
+            slotNumber++;
+        }
+    }
 }
 
 void initShop(Player* player) {

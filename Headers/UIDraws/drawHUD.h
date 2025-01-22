@@ -1,20 +1,20 @@
 #include "../UIInits/initHUD.h"
 
-void drawEffects(sf::RenderWindow&, Player*);
-void updateHUDUI();
+void drawEffects(sf::RenderWindow& window, Player& player);
 
-void drawHUD(sf::RenderWindow& window, Player* player, std::vector<Weapon*>* Weapons) {
+void drawHUD(sf::RenderWindow& window, Player& player, std::vector<Weapon*>* Weapons) {
     window.setView(HUDView);
 
-    updateHUDUI();
     {
         using namespace HUD;
+        updateHUDUI(player);
+
         for (sf::Drawable*& d : InterfaceStuff) {
             window.draw(*d);
         }
 
         for (int i = 0; i < Weapons->size(); i++) {
-            if ((*Weapons)[i] == player->CurWeapon) {
+            if ((*Weapons)[i] == player.CurWeapon) {
                 WeaponNameTexts[i]->setFillColor(sf::Color::White);
                 WeaponNameTexts[i]->setOutlineThickness(3);
             } else {
@@ -84,14 +84,14 @@ void drawHUD(sf::RenderWindow& window, Player* player, std::vector<Weapon*>* Wea
     }
 }
 
-void drawEffects(sf::RenderWindow& window, Player* player) {
+void drawEffects(sf::RenderWindow& window, Player& player) {
     {
         using namespace HUD;
         int count = 0;
         int xOffset = 175, yOffset = 175;
         std::vector<int> seenEffects(Effects::EffectCount, 0);
         std::vector<sf::Time> effectTimes(Effects::EffectCount, sf::Time::Zero);
-        for (Effect* eff : player->effects) {
+        for (Effect* eff : player.effects) {
             if (eff->type != Effects::Heal && eff->type != Effects::Damage && eff->active) {
                 if (seenEffects[eff->type] == 0) {
                     effectIcons[eff->type]->setPosition(MPBar.getPosition().x - 300 + xOffset * (count % 3),

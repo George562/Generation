@@ -1,10 +1,6 @@
 #pragma once
 #include "../UIInits/initInventory.h"
 
-void updateUpgradeInterfaceUI();
-void updateInventoryUI();
-void drawUpgradeInterface(sf::RenderWindow& window);
-
 void drawChoosingComponent(sf::RenderWindow& window) {
     {
         using namespace upgradeInterface;
@@ -37,12 +33,11 @@ void drawChoosingComponent(sf::RenderWindow& window) {
     }
 }
 
-void drawInventory(sf::RenderWindow& window, Player* player) {
+void drawInventory(sf::RenderWindow& window, Player& player) {
     window.setView(InventoryView);
-
-    updateInventoryUI();
     {
         using namespace inventoryInterface;
+        updateInventoryUI(player);
 
         for (sf::Drawable*& elem : commonElements)
             window.draw(*elem);
@@ -51,7 +46,7 @@ void drawInventory(sf::RenderWindow& window, Player* player) {
                 for (sf::Drawable*& elem : pageElements[activePage])
                     window.draw(*elem);
 
-                for (Item*& item : player->inventory.items) {
+                for (Item*& item : player.inventory.items) {
                     window.draw(itemSlotsElements[item->id]);
                     window.draw(*item);
                 }
@@ -79,17 +74,19 @@ void drawInventory(sf::RenderWindow& window, Player* player) {
     window.setView(HUDView);
 }
 
-void drawUpgradeInterface(sf::RenderWindow& window) {
+void drawUpgradeInterface(sf::RenderWindow& window, Player& player) {
     window.setView(InterfaceView);
+    {
+        using namespace upgradeInterface;
 
-    updateUpgradeInterfaceUI();
-    for (sf::Drawable*& elem : upgradeInterface::UIElements) // not working
-        window.draw(*elem);
+        upgradeInterface::updateUpgradeInterfaceUI(player);
+        for (sf::Drawable*& elem : upgradeInterface::UIElements) // not working
+            window.draw(*elem);
 
-    drawChoosingComponent(window);
+        drawChoosingComponent(window);
 
-    window.draw(upgradeInterface::coinSprite);
-    window.draw(upgradeInterface::playerCoinAmount);
-
+        window.draw(upgradeInterface::coinSprite);
+        window.draw(upgradeInterface::playerCoinAmount);
+    }
     window.setView(HUDView);
 }

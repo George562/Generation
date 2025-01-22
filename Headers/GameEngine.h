@@ -126,14 +126,6 @@ void drawMiniMap();
 //----------------------------
 
 
-//---------------------------- UI UPDATERS/CREATORS
-void updateHUDUI();
-void updateInventoryUI();
-void updateShopUI();
-void updateUpgradeInterfaceUI();
-//----------------------------
-
-
 //---------------------------- EVENT HANDLERS
 void EventHandler();
 void inventoryHandler(sf::Event&);
@@ -158,7 +150,6 @@ void updateBullets();
 void EnemyDie(int i);
 void updateEnemies();
 void updateUpgradeShopStats();
-void openUpgradeShop();
 
 bool useItem(Item*&);
 
@@ -176,15 +167,6 @@ void updateShaders();
 
 //---------------------------- HELPER FUNCTIONS
 bool CanSomethingBeActivated();
-template <class T> void updateCostsText(PlacedText*, Upgradable<T>*, int);
-template <class T> void updateCountText(PlacedText* counterText, Upgradable<T>* stat);
-template <class T> void updateStatsText(PlacedText* statText, Upgradable<T>* stat);
-template <class T> void upgradeStat(int, Upgradable<T>*,
-                                    PlacedText* costText = nullptr,
-                                    PlacedText* = nullptr,
-                                    PlacedText* = nullptr);
-void setUpgradeFunctions();
-void updateUpgradeTexts();
 void addMessageText(std::string s, sf::Color fillColor, sf::Color outlineColor = sf::Color::White);
 
 void saveGame();
@@ -418,7 +400,7 @@ void initScripts() {
 
     upgradeSector.setFunction([](Interactable* i) {
         upgradeInterface::isDrawUpgradeInterface = true;
-        openUpgradeShop();
+        upgradeInterface::openUpgradeShop();
     });
 
     portal.setFunction([](Interactable* i) {
@@ -558,11 +540,11 @@ void draw() {
     window.clear(sf::Color::Transparent);
     updateShaders();
     if (inventoryInterface::isDrawInventory) {
-        drawInventory(window, &player);
+        drawInventory(window, player);
     } else if (MenuShop::isDrawShop) {
-        drawShop(window, &player);
+        drawShop(window, player);
     } else if (upgradeInterface::isDrawUpgradeInterface) {
-        drawUpgradeInterface(window);
+        drawUpgradeInterface(window, player);
     } else {
         preRenderTexture.clear(sf::Color::Transparent);
         preRenderTexture.setView(HUDView);
@@ -638,7 +620,7 @@ void draw() {
             drawMiniMap();
         }
         if (HUD::IsDrawHUD) {
-            drawHUD(window, &player, &Weapons);
+            drawHUD(window, player, &Weapons);
         }
     }
     window.display();
@@ -729,130 +711,6 @@ void drawMiniMap() {
 }
 //==============================================================================================
 
-
-
-//============================================================================================== UI UPDATERS/CREATORS
-void updateHUDUI() {
-    HUD::playerCoinAmount.setFontString(FontString(std::to_string(player.inventory.money), 50, sf::Color(200, 200, 200)));
-    HUD::playerCoinAmount.parentTo(&HUD::coinSprite, true, { -10, 0 });
-}
-
-void updateInventoryUI() {
-    {
-        using namespace inventoryInterface;
-
-        if (doInventoryUpdate[inventoryPage::Items]) {
-            int slotNumber = 0;
-            unsigned int offsetLarge = 200;
-            unsigned int offsetSmall = 50;
-            unsigned int slotSize = 150;
-            for (Item*& drawnItem : player.inventory.items) {
-                drawnItem->animation->setScale({ 0.75, 0.75 });
-
-                float itemX = (slotNumber % 6) * offsetLarge +
-                              itemListBG.getPosition().x + offsetSmall;
-                float itemY = (slotNumber / 6) * offsetLarge +
-                              itemListBG.getPosition().y + offsetSmall;
-
-                ItemSlot* slot = &itemSlotsElements[drawnItem->id];
-                if (!slot->isInitialized) {
-                    slot->init("inv_ItemIDSlot" + drawnItem->id);
-                }
-                slot->amountText->setFontString(FontString(std::to_string(drawnItem->amount), 20));
-                slot->setSize({ slotSize, slotSize });
-                slot->setTexture(Textures::ItemPanel, UI::element);
-                slot->setPosition(itemX, itemY);
-
-                drawnItem->animation->moveToAnchor(slot, UI::center, UI::center);
-
-                slotNumber++;
-            }
-
-            coinSlot.background->setTexture(Textures::INVISIBLE);
-            coinSlot.amountText->setString(std::to_string(player.inventory.money));
-
-            doInventoryUpdate[inventoryPage::Items] = false;
-        }
-        statsHPRegenText.setString("Health regen: " + floatToString(player.HealthRecovery));
-        statsMPRegenText.setString("Mana regen: " + floatToString(player.ManaRecovery));
-        statsArmorText.setString("Armor: " + floatToString(player.Armor.cur));
-        statsCompletedLevelsText.setString("Completed Levels: " + std::to_string(completedLevels));
-        statsCurLevelsText.setString("Current Level: " + std::to_string(curLevel));
-        updateUpgradeInterfaceUI();
-    }
-}
-
-void updateShopUI() {
-    {
-        using namespace MenuShop;
-        int slotNumber = 0;
-        unsigned int offsetLarge = 200;
-        unsigned int offsetSmall = 50;
-        unsigned int slotSize = 100;
-        for (Item*& drawnItem : shop.soldItems.items) {
-            drawnItem->animation->setScale({ 0.5, 0.5 });
-
-            float itemX = (slotNumber % 5) * offsetLarge + offsetSmall;
-            float itemY = (slotNumber / 5) * offsetLarge + offsetSmall;
-
-            ShopSlot* slot = &slotsElements[drawnItem->id];
-            if (!slotsElements[drawnItem->id].isInitialized) {
-                slot->init("mShop_ItemIDSlot" + drawnItem->id);
-            }
-            slot->amountText->setFontString(FontString(std::to_string(drawnItem->amount), 20));
-            slot->setSize({ slotSize, slotSize });
-            slot->setTexture(Textures::ItemPanel, UI::element);
-            slot->setPosition(itemX, itemY);
-
-            drawnItem->animation->moveToAnchor(slot, UI::center, UI::center);
-
-
-            PlacedText& itemPriceText = *slot->priceText;
-            itemPriceText.setFontString(
-                FontString(std::to_string(shop.itemPrices[drawnItem->id]) + " C", 20)
-            );
-
-            slotNumber++;
-        }
-
-        slotNumber = 0;
-        for (Item*& drawnItem : player.inventory.items) {
-            drawnItem->animation->setScale({ 0.5, 0.5 });
-
-            float itemX = (slotNumber % 3) * offsetLarge + offsetSmall;
-            float itemY = (slotNumber / 3) * offsetLarge + offsetSmall;
-
-            ShopSlot* pslot = &playerSlotsElements[drawnItem->id];
-            if (!pslot->isInitialized) {
-                pslot->init("mShop_PlItemIDSlot" + drawnItem->id);
-            }
-            pslot->amountText->setFontString(FontString(std::to_string(drawnItem->amount), 20));
-
-            pslot->priceText->setFontString(
-                FontString(std::to_string(shop.itemPrices[drawnItem->id]) + " C", 20)
-            );
-
-            pslot->setSize({ slotSize, slotSize });
-            pslot->setTexture(Textures::ItemPanel, UI::element);
-            pslot->setPosition(itemX, itemY);
-
-            drawnItem->animation->moveToAnchor(pslot, UI::center, UI::center);
-
-            slotNumber++;
-        }
-    }
-}
-
-void updateUpgradeInterfaceUI() {
-    {
-        using namespace upgradeInterface;
-        updateUpgradeTexts();
-        updateUpgradeShopStats();
-        upgradeInterface::playerCoinAmount.setFontString(FontString(std::to_string(player.inventory.money), 50, sf::Color(200, 200, 200)));
-        upgradeInterface::playerCoinAmount.parentTo(&upgradeInterface::coinSprite, true, { -10, 0 });
-    }
-}
-//==============================================================================================
 
 sf::Clock SHiftClickTime;
 //============================================================================================== EVENT HANDLERS
@@ -1427,6 +1285,141 @@ void LoadMainMenu() {
 //==============================================================================================
 
 
+//============================================================================================== UI UPDATE FUNCTIONS
+template <class T>
+void updateCostsText(PlacedText* costText, Upgradable<T>* stat, int cost) {
+    if (stat->maxed()) costText->setString(FontString("Maxed out", 50, sf::Color::Green));
+    else costText->setString(FontString("Cost of upgrade: " + std::to_string(cost * (1 + stat->curLevel)), 50));
+}
+
+template <class T>
+void updateCountText(PlacedText* counterText, Upgradable<T>* stat) {
+    if (stat->maxed()) counterText->setString(FontString(std::to_string(stat->maxLevel) + " / " +
+                                                        std::to_string(stat->maxLevel), 24, sf::Color::Green));
+    else counterText->setString(FontString(std::to_string(stat->curLevel + 1) + " / " +
+                                        std::to_string(stat->maxLevel), 24));
+}
+
+template <class T>
+void updateStatsText(PlacedText* statText, Upgradable<T>* stat) {
+    if constexpr (std::is_same_v<T, sf::Time>) {
+        if (stat->maxed()) statText->setString(FontString(floatToString(stat->getStat().asSeconds()), 24, sf::Color::Green));
+        else statText->setString(FontString(floatToString(stat->getStat().asSeconds()) + " -> " +
+                                            floatToString(stat->stats[stat->curLevel + 1].asSeconds()), 24));
+    } else if constexpr (std::is_same_v<T, float>) {
+        if (stat->maxed()) statText->setString(FontString(floatToString(stat->getStat()), 24, sf::Color::Green));
+        else statText->setString(FontString(floatToString(stat->getStat()) + " -> " +
+                                            floatToString(stat->stats[stat->curLevel + 1]), 24));
+    } else {
+        if (stat->maxed()) statText->setString(FontString(std::to_string(stat->getStat()), 24, sf::Color::Green));
+        else statText->setString(FontString(std::to_string(stat->getStat()) + " -> " +
+                                            std::to_string(stat->stats[stat->curLevel + 1]), 24));
+    }
+}
+template <class T>
+void upgradeStat(int cost, Upgradable<T>* stat, PlacedText* costText=nullptr, PlacedText* statText=nullptr, PlacedText* counterText=nullptr) {
+    if (!stat->maxed() && player.inventory.money >= cost * (1 + stat->curLevel)) {
+        player.inventory.money -= cost * (1 + stat->curLevel);
+        stat->upgrade(1);
+    }
+    if (costText != nullptr) updateCostsText(costText, stat, cost);
+    if (statText != nullptr) updateStatsText(statText, stat);
+    if (counterText != nullptr) updateCountText(counterText, stat);
+}
+
+void setUpgradeFunctions() {
+    {
+        using namespace upgradeInterface;
+        compUpgBtns[0][0]->setFunction([]() {
+            upgradeStat(50, &player.CurWeapon->MaxManaStorage,
+                        compUpgCosts[0][0], compUpgStats[0][0], compUpgCount[0][0]);
+            if (!pistol.MaxManaStorage.maxed())
+                pistol.ManaStorage.top = pistol.MaxManaStorage;
+        });
+
+        compUpgBtns[0][1]->setFunction([]() {
+            upgradeStat(70, &player.CurWeapon->ReloadSpeed,
+                        compUpgCosts[0][1], compUpgStats[0][1], compUpgCount[0][1]);
+        });
+
+        compUpgBtns[1][0]->setFunction([]() {
+            upgradeStat(25, &player.CurWeapon->TimeToHolster,
+                        compUpgCosts[1][0], compUpgStats[1][0], compUpgCount[1][0]);
+        });
+
+        compUpgBtns[1][1]->setFunction([]() {
+            upgradeStat(25, &player.CurWeapon->TimeToDispatch,
+                        compUpgCosts[1][1], compUpgStats[1][1], compUpgCount[1][1]);
+        });
+
+        compUpgBtns[2][0]->setFunction([]() {
+            upgradeStat(35, &player.CurWeapon->FireRate,
+                        compUpgCosts[2][0], compUpgStats[2][0], compUpgCount[2][0]);
+        });
+
+        compUpgBtns[2][1]->setFunction([]() {
+            upgradeStat(80, &player.CurWeapon->ManaCostOfBullet,
+                        compUpgCosts[2][1], compUpgStats[2][1], compUpgCount[2][1]);
+        });
+
+        compUpgBtns[2][2]->setFunction([]() {
+            upgradeStat(80, &player.CurWeapon->Multishot,
+                        compUpgCosts[2][2], compUpgStats[2][2], compUpgCount[2][2]);
+        });
+
+        compUpgBtns[3][0]->setFunction([]() {
+            upgradeStat(65, &player.CurWeapon->BulletVelocity,
+                        compUpgCosts[3][0], compUpgStats[3][0], compUpgCount[3][0]);
+        });
+
+        compUpgBtns[3][1]->setFunction([]() {
+            upgradeStat(65, &player.CurWeapon->Scatter,
+                        compUpgCosts[3][1], compUpgStats[3][1], compUpgCount[3][1]);
+        });
+    }
+}
+
+void updateUpgradeShopStats() {
+    {
+        using namespace upgradeInterface;
+
+        std::string descString = player.CurWeapon->Name + '\n';
+        descString += weaponDescString[player.CurWeapon->Name];
+        weaponDescPanel.setString(descString);
+
+        manaStStat.setString("Mana storage: " + floatToString(player.CurWeapon->MaxManaStorage));
+        relSpStat.setString("Reload Speed: " + floatToString(player.CurWeapon->ReloadSpeed.getStat()) + " mana/sec");
+        manaStStat.updateAnchor({ 0, sch / 34.f });
+        relSpStat.updateAnchor({ 0, sch / 34.f });
+
+        tthStat.setString("Time To Holster: " + floatToString(player.CurWeapon->TimeToHolster.getStat().asSeconds()) + " sec");
+        ttdStat.setString("Time To Dispatch: " + floatToString(player.CurWeapon->TimeToDispatch.getStat().asSeconds()) + " sec");
+        tthStat.updateAnchor({ 0, sch / 34.f });
+        ttdStat.updateAnchor({ 0, sch / 34.f });
+
+        dmgStat.setString("Damage: " + floatToString(player.CurWeapon->ManaCostOfBullet));
+        msStat.setString("Bullet per shot: " + std::to_string(player.CurWeapon->Multishot));
+        frStat.setString("Rate of fire: " + floatToString(1 / player.CurWeapon->FireRate.getStat().asSeconds()) + " shots/sec");
+        dmgStat.updateAnchor({ 0, sch / 34.f });
+        msStat.updateAnchor({ 0, sch / 34.f });
+        frStat.updateAnchor({ 0, sch / 34.f });
+
+        velStat.setString("Bullet velocity: " + floatToString(player.CurWeapon->BulletVelocity));
+        scatStat.setString("Scatter: " + floatToString(player.CurWeapon->Scatter) + " deg");
+        velStat.updateAnchor({ 0, sch / 34.f });
+        scatStat.updateAnchor({ 0, sch / 34.f });
+
+        if (player.CurWeapon->Name == "Pistol")
+            weaponImg.setTexture(Textures::PH_Pistol, UI::texture);
+        if (player.CurWeapon->Name == "Shotgun")
+            weaponImg.setTexture(Textures::PH_Shotgun, UI::texture);
+        if (player.CurWeapon->Name == "Rifle")
+            weaponImg.setTexture(Textures::PH_Rifle, UI::texture);
+    }
+}
+//==============================================================================================
+
+
 
 //============================================================================================== GAME STATE FUNCTIONS
 void updateBullets() {
@@ -1519,12 +1512,7 @@ sf::Vector2f chooseCellCenter(Enemy*& cr) {
     sf::Vector2f targetCenter = cr->getCenter();
     targetCenter.x = size / 2 + size * round(targetCenter.x / size);
     targetCenter.y = size / 2 + size * round(targetCenter.y / size);
-    int dirX = 0, dirY = 0;
-    rand();
-    int axis = std::rand() % 2 == 0 ? 1 : -1;
-    if (axis == -1) dirX = std::rand() % 2 == 0 ? 1 : -1;
-    else dirY = std::rand() % 2 == 0 ? 1 : -1;
-    return targetCenter + sf::Vector2f(dirX * size, dirY * size);
+    return targetCenter + sf::Vector2f(dirs[std::rand() % 4] * size);
 }
 
 void updateEnemies() {
@@ -1551,16 +1539,12 @@ void updateEnemies() {
                 Enemies[i]->VelocityBuff = 1.0;
                 Enemies[i]->shootTarget = centers[0];
                 for (int j = 1; j < centers.size(); j++)
-                    if (distance(Enemies[i]->getCenter(), centers[j]) < distance(Enemies[i]->getCenter(), Enemies[i]->target)) {
+                    if (distance(Enemies[i]->getCenter(), centers[j]) < distance(Enemies[i]->getCenter(), Enemies[i]->target))
                         Enemies[i]->shootTarget = centers[j];
-                        Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + 2 * distance(Enemies[i]->getCenter(), centers[j]) / Enemies[i]->MaxVelocity);
-                    }
-                sf::Vector2f playerTargetPos = Enemies[i]->shootTarget;
-                float attackArea = size / 4.;
-                float targetEnemyDistDiff = length(Enemies[i]->getCenter() - playerTargetPos);
+                float attackArea = size / 4.f;
+                float targetEnemyDistDiff = length(Enemies[i]->getCenter() - Enemies[i]->shootTarget);
                 float distRange = 3 / 2 * size;
-                switch (Enemies[i]->targetMode)
-                {
+                switch (Enemies[i]->targetMode) {
                     case TargetMode::pursuit:
                         // EnemyType if-else is Placeholder.
                         // Will be changed to a proper Enemy class behaviour fuinction
@@ -1573,7 +1557,7 @@ void updateEnemies() {
                                 Enemies[i]->passiveWait = GameTime;
                             } else {
                                 float posCoef = distRange / targetEnemyDistDiff;
-                                sf::Vector2f targetPoint = posCoef * Enemies[i]->getCenter() + (1 - posCoef) * playerTargetPos;
+                                sf::Vector2f targetPoint = posCoef * Enemies[i]->getCenter() + (1 - posCoef) * Enemies[i]->shootTarget;
                                 Enemies[i]->setTarget(targetPoint);
                             }
                         }
@@ -1595,7 +1579,7 @@ void updateEnemies() {
                             sf::Vector2f randomOffset = increment * centerRandVector(4);
                             CollisionCircle futureHitbox = Enemies[i]->hitbox;
                             futureHitbox.setCenter(Enemies[i]->target + randomOffset);
-                            targetEnemyDistDiff = length(Enemies[i]->target + randomOffset - playerTargetPos);
+                            targetEnemyDistDiff = length(Enemies[i]->target + randomOffset - Enemies[i]->shootTarget);
                             isInsideFightingRange = targetEnemyDistDiff - distRange <= attackArea * 2 &&
                                                     targetEnemyDistDiff >= attackArea / 2;
                             if (ExistDirectWay(futureHitbox, player.getCenter()) && isInsideFightingRange)
@@ -1608,17 +1592,14 @@ void updateEnemies() {
                 float timeToTarget;
                 if (Enemies[i]->targetMode == TargetMode::fight)
                     Enemies[i]->targetMode = TargetMode::pursuit;
-                switch (Enemies[i]->targetMode)
-                {
+                switch (Enemies[i]->targetMode) {
                     case TargetMode::sleep:
                         break;
                     case TargetMode::wander:
                         if (GameTime >= Enemies[i]->passiveWait) {
                             Enemies[i]->lastTarget = Enemies[i]->target;
                             sf::Vector2f newTarget;
-                            do {
-                                newTarget = chooseCellCenter(Enemies[i]);
-                            } while (newTarget == Enemies[i]->lastTarget);
+                            newTarget = chooseCellCenter(Enemies[i]);
                             Enemies[i]->setTarget(newTarget);
                             Enemies[i]->passiveWait = sf::seconds(GameTime.asSeconds() + std::rand() % 5 + 3);
                             Enemies[i]->targetMode = TargetMode::wander;
@@ -1663,138 +1644,6 @@ void updateEnemies() {
     }
 }
 
-void updateUpgradeShopStats() {
-    {
-        using namespace upgradeInterface;
-        std::string descString = player.CurWeapon->Name + '\n';
-        descString += weaponDescString[player.CurWeapon->Name];
-        weaponDescPanel.setString(descString);
-
-        manaStStat.setString("Mana storage: " + floatToString(player.CurWeapon->MaxManaStorage));
-        relSpStat.setString("Reload Speed: " + floatToString(player.CurWeapon->ReloadSpeed.getStat()) + " mana/sec");
-        manaStStat.updateAnchor({ 0, sch / 34.f });
-        relSpStat.updateAnchor({ 0, sch / 34.f });
-
-        tthStat.setString("Time To Holster: " + floatToString(player.CurWeapon->TimeToHolster.getStat().asSeconds()) + " sec");
-        ttdStat.setString("Time To Dispatch: " + floatToString(player.CurWeapon->TimeToDispatch.getStat().asSeconds()) + " sec");
-        tthStat.updateAnchor({ 0, sch / 34.f });
-        ttdStat.updateAnchor({ 0, sch / 34.f });
-
-        dmgStat.setString("Damage: " + floatToString(player.CurWeapon->ManaCostOfBullet));
-        msStat.setString("Bullet per shot: " + std::to_string(player.CurWeapon->Multishot));
-        frStat.setString("Rate of fire: " + floatToString(1 / player.CurWeapon->FireRate.getStat().asSeconds()) + " shots/sec");
-        dmgStat.updateAnchor({ 0, sch / 34.f });
-        msStat.updateAnchor({ 0, sch / 34.f });
-        frStat.updateAnchor({ 0, sch / 34.f });
-
-        velStat.setString("Bullet velocity: " + floatToString(player.CurWeapon->BulletVelocity));
-        scatStat.setString("Scatter: " + floatToString(player.CurWeapon->Scatter) + " deg");
-        velStat.updateAnchor({ 0, sch / 34.f });
-        scatStat.updateAnchor({ 0, sch / 34.f });
-
-        if (player.CurWeapon == &pistol)
-            weaponImg.setTexture(Textures::PH_Pistol, UI::texture);
-        if (player.CurWeapon == &shotgun)
-            weaponImg.setTexture(Textures::PH_Shotgun, UI::texture);
-        if (player.CurWeapon == &rifle)
-            weaponImg.setTexture(Textures::PH_Rifle, UI::texture);
-    }
-}
-
-void setUpgradeFunctions() {
-    {
-        using namespace upgradeInterface;
-
-        compUpgBtns[0][0]->setFunction([]() {
-            upgradeStat(50, &player.CurWeapon->MaxManaStorage,
-            compUpgCosts[0][0], compUpgStats[0][0], compUpgCount[0][0]);
-            if (!pistol.MaxManaStorage.maxed())
-                pistol.ManaStorage.top = pistol.MaxManaStorage;
-        });
-
-        compUpgBtns[0][1]->setFunction([]() {
-            upgradeStat(70, &player.CurWeapon->ReloadSpeed,
-            compUpgCosts[0][1], compUpgStats[0][1], compUpgCount[0][1]);
-        });
-
-        compUpgBtns[1][0]->setFunction([]() {
-            upgradeStat(25, &player.CurWeapon->TimeToHolster,
-            compUpgCosts[1][0], compUpgStats[1][0], compUpgCount[1][0]);
-        });
-
-        compUpgBtns[1][1]->setFunction([]() {
-            upgradeStat(25, &player.CurWeapon->TimeToDispatch,
-            compUpgCosts[1][1], compUpgStats[1][1], compUpgCount[1][1]);
-        });
-
-        compUpgBtns[2][0]->setFunction([]() {
-            upgradeStat(35, &player.CurWeapon->FireRate,
-            compUpgCosts[2][0], compUpgStats[2][0], compUpgCount[2][0]);
-        });
-
-        compUpgBtns[2][1]->setFunction([]() {
-            upgradeStat(80, &player.CurWeapon->ManaCostOfBullet,
-            compUpgCosts[2][1], compUpgStats[2][1], compUpgCount[2][1]);
-        });
-
-        compUpgBtns[2][2]->setFunction([]() {
-            upgradeStat(80, &player.CurWeapon->Multishot,
-            compUpgCosts[2][2], compUpgStats[2][2], compUpgCount[2][2]);
-        });
-
-        compUpgBtns[3][0]->setFunction([]() {
-            upgradeStat(65, &player.CurWeapon->BulletVelocity,
-            compUpgCosts[3][0], compUpgStats[3][0], compUpgCount[3][0]);
-        });
-
-        compUpgBtns[3][1]->setFunction([]() {
-            upgradeStat(65, &player.CurWeapon->Scatter,
-            compUpgCosts[3][1], compUpgStats[3][1], compUpgCount[3][1]);
-        });
-    }
-}
-
-void updateUpgradeTexts() {
-    {
-        using namespace upgradeInterface;
-        updateCostsText(compUpgCosts[0][0], &player.CurWeapon->MaxManaStorage, 50);
-        updateStatsText(compUpgStats[0][0], &player.CurWeapon->MaxManaStorage);
-        updateCountText(compUpgCount[0][0], &player.CurWeapon->MaxManaStorage);
-
-        updateCostsText(compUpgCosts[0][1], &player.CurWeapon->ReloadSpeed, 70);
-        updateStatsText(compUpgStats[0][1], &player.CurWeapon->ReloadSpeed);
-        updateCountText(compUpgCount[0][1], &player.CurWeapon->ReloadSpeed);
-
-        updateCostsText(compUpgCosts[1][0], &player.CurWeapon->TimeToHolster, 25);
-        updateStatsText(compUpgStats[1][0], &player.CurWeapon->TimeToHolster);
-        updateCountText(compUpgCount[1][0], &player.CurWeapon->TimeToHolster);
-
-        updateCostsText(compUpgCosts[1][1], &player.CurWeapon->TimeToDispatch, 25);
-        updateStatsText(compUpgStats[1][1], &player.CurWeapon->TimeToDispatch);
-        updateCountText(compUpgCount[1][1], &player.CurWeapon->TimeToDispatch);
-
-        updateCostsText(compUpgCosts[2][0], &player.CurWeapon->FireRate, 35);
-        updateStatsText(compUpgStats[2][0], &player.CurWeapon->FireRate);
-        updateCountText(compUpgCount[2][0], &player.CurWeapon->FireRate);
-
-        updateCostsText(compUpgCosts[2][1], &player.CurWeapon->ManaCostOfBullet, 80);
-        updateStatsText(compUpgStats[2][1], &player.CurWeapon->ManaCostOfBullet);
-        updateCountText(compUpgCount[2][1], &player.CurWeapon->ManaCostOfBullet);
-
-        updateCostsText(compUpgCosts[2][2], &player.CurWeapon->Multishot, 80);
-        updateStatsText(compUpgStats[2][2], &player.CurWeapon->Multishot);
-        updateCountText(compUpgCount[2][2], &player.CurWeapon->Multishot);
-
-        updateCostsText(compUpgCosts[3][0], &player.CurWeapon->BulletVelocity, 65);
-        updateStatsText(compUpgStats[3][0], &player.CurWeapon->BulletVelocity);
-        updateCountText(compUpgCount[3][0], &player.CurWeapon->BulletVelocity);
-
-        updateCostsText(compUpgCosts[3][1], &player.CurWeapon->Scatter, 65);
-        updateStatsText(compUpgStats[3][1], &player.CurWeapon->Scatter);
-        updateCountText(compUpgCount[3][1], &player.CurWeapon->Scatter);
-    }
-}
-
 void addMessageText(std::string s, sf::Color fillColor, sf::Color outlineColor) {
     TempText* tempText = new TempText(sf::seconds(2.5f));
     tempText->setCharacterSize(50);
@@ -1804,19 +1653,6 @@ void addMessageText(std::string s, sf::Color fillColor, sf::Color outlineColor) 
     tempText->setFillColor(fillColor);
     tempText->setCenter(scw / 2.f, sch / 2.f - 165.f);
     HUD::MessageText.push_back(tempText);
-}
-
-void openUpgradeShop() {
-    {
-        using namespace upgradeInterface;
-        initUpgradeUI();
-        setUpgradeFunctions();
-        updateUpgradeShopStats();
-        addUI(&BG, UIElements);
-        for (int i = 0; i < compUpgBtns.size(); i++)
-            for (int j = 0; j < compUpgBtns[i].size(); j++)
-                compUpgBtns[i][j]->setSpriteColor(sf::Color::White);
-    }
 }
 
 void processEffects() {
@@ -1967,48 +1803,6 @@ bool CanSomethingBeActivated() {
     }
     HUD::showDescriptions = false;
     return false;
-}
-
-template <class T>
-void updateCostsText(PlacedText* costText, Upgradable<T>* stat, int cost) {
-    if (stat->maxed()) costText->setString(FontString("Maxed out", 50, sf::Color::Green));
-    else costText->setString(FontString("Cost of upgrade: " + std::to_string(cost * (1 + stat->curLevel)), 50));
-}
-
-template <class T>
-void updateCountText(PlacedText* counterText, Upgradable<T>* stat) {
-    if (stat->maxed()) counterText->setString(FontString(std::to_string(stat->maxLevel) + " / " +
-                                                         std::to_string(stat->maxLevel), 24, sf::Color::Green));
-    else counterText->setString(FontString(std::to_string(stat->curLevel + 1) + " / " +
-                                           std::to_string(stat->maxLevel), 24));
-}
-
-template <class T>
-void updateStatsText(PlacedText* statText, Upgradable<T>* stat) {
-    if constexpr (std::is_same_v<T, sf::Time>) {
-        if (stat->maxed()) statText->setString(FontString(floatToString(stat->getStat().asSeconds()), 24, sf::Color::Green));
-        else statText->setString(FontString(floatToString(stat->getStat().asSeconds()) + " -> " +
-                                            floatToString(stat->stats[stat->curLevel + 1].asSeconds()), 24));
-    } else if constexpr (std::is_same_v<T, float>) {
-        if (stat->maxed()) statText->setString(FontString(floatToString(stat->getStat()), 24, sf::Color::Green));
-        else statText->setString(FontString(floatToString(stat->getStat()) + " -> " +
-                                            floatToString(stat->stats[stat->curLevel + 1]), 24));
-    } else {
-        if (stat->maxed()) statText->setString(FontString(std::to_string(stat->getStat()), 24, sf::Color::Green));
-        else statText->setString(FontString(std::to_string(stat->getStat()) + " -> " +
-                                            std::to_string(stat->stats[stat->curLevel + 1]), 24));
-    }
-}
-
-template <class T>
-void upgradeStat(int cost, Upgradable<T>* stat, PlacedText* costText, PlacedText* statText, PlacedText* counterText) {
-    if (!stat->maxed() && player.inventory.money >= cost * (1 + stat->curLevel)) {
-        player.inventory.money -= cost * (1 + stat->curLevel);
-        stat->upgrade(1);
-    }
-    if (costText != nullptr) updateCostsText(costText, stat, cost);
-    if (statText != nullptr) updateStatsText(statText, stat);
-    if (counterText != nullptr) updateCountText(counterText, stat);
 }
 
 void saveGame() {

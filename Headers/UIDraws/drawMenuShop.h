@@ -1,13 +1,11 @@
 #pragma once
 #include "../UIInits/initMenuShop.h"
 
-void updateShopUI();
-
-void drawShop(sf::RenderWindow& window, Player* player) {
+void drawShop(sf::RenderWindow& window, Player& player) {
     window.setView(InterfaceView);
     {
         using namespace MenuShop;
-        updateShopUI();
+        updateShopUI(player);
 
         for (sf::Drawable*& elem : UIElements)
             window.draw(*elem);
@@ -21,7 +19,7 @@ void drawShop(sf::RenderWindow& window, Player* player) {
         }
 
         window.setView(ShopPlayerInvView);
-        for (Item*& item : player->inventory.items) {
+        for (Item*& item : player.inventory.items) {
             if (playerSlotsElements[item->id].isInitialized) {
                 window.draw(playerSlotsElements[item->id], playerInvTransform);
                 window.draw(*item, playerInvTransform);

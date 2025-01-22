@@ -41,6 +41,11 @@ namespace HUD {
     bool showDescriptions;
     Animation coinSprite("upg_coinAnim", UI::BR, UI::BR);
     PlacedText playerCoinAmount("plCoin_amount", UI::L, UI::R);
+
+    void updateHUDUI(Player& player) {
+        playerCoinAmount.setFontString(FontString(std::to_string(player.inventory.money), 50, sf::Color(200, 200, 200)));
+        playerCoinAmount.parentTo(&coinSprite, true, { -10, 0 });
+    }
 }
 
 void initHUD(Player* player, std::vector<Weapon*>* Weapons) {

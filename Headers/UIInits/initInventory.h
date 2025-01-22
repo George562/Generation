@@ -12,6 +12,20 @@
 #include "../Utility/Tools.h"
 #include "../Utility/VectorTools.h"
 
+namespace upgradeInterface {
+    void updateUpgradeInterfaceUI(Player& player);
+}
+
+void setUpgradeFunctions();
+void updateUpgradeShopStats();
+template <class T>
+void updateCostsText(PlacedText* costText, Upgradable<T>* stat, int cost);
+template <class T>
+void updateCountText(PlacedText* counterText, Upgradable<T>* stat);
+template <class T>
+void updateStatsText(PlacedText* statText, Upgradable<T>* stat);
+void initUpgradeUI();
+
 namespace inventoryInterface {
     bool isDrawInventory = false;
 
@@ -58,10 +72,48 @@ namespace inventoryInterface {
 
     PlacedText itemDescText;
     ItemID::Type prevItemDescID;
-}
 
-void setUpgradeFunctions();
-void updateUpgradeShopStats();
+    void updateInventoryUI(Player& player) {
+        if (doInventoryUpdate[inventoryPage::Items]) {
+            int slotNumber = 0;
+            unsigned int offsetLarge = 200;
+            unsigned int offsetSmall = 50;
+            unsigned int slotSize = 150;
+            for (Item*& drawnItem : player.inventory.items) {
+                drawnItem->animation->setScale({ 0.75, 0.75 });
+
+                float itemX = (slotNumber % 6) * offsetLarge +
+                                itemListBG.getPosition().x + offsetSmall;
+                float itemY = (slotNumber / 6) * offsetLarge +
+                                itemListBG.getPosition().y + offsetSmall;
+
+                ItemSlot* slot = &itemSlotsElements[drawnItem->id];
+                if (!slot->isInitialized) {
+                    slot->init("inv_ItemIDSlot" + drawnItem->id);
+                }
+                slot->amountText->setFontString(FontString(std::to_string(drawnItem->amount), 20));
+                slot->setSize({ slotSize, slotSize });
+                slot->setTexture(Textures::ItemPanel, UI::element);
+                slot->setPosition(itemX, itemY);
+
+                drawnItem->animation->moveToAnchor(slot, UI::center, UI::center);
+
+                slotNumber++;
+            }
+
+            coinSlot.background->setTexture(Textures::INVISIBLE);
+            coinSlot.amountText->setString(std::to_string(player.inventory.money));
+
+            doInventoryUpdate[inventoryPage::Items] = false;
+        }
+        statsHPRegenText.setString("Health regen: " + floatToString(player.HealthRecovery));
+        statsMPRegenText.setString("Mana regen: " + floatToString(player.ManaRecovery));
+        statsArmorText.setString("Armor: " + floatToString(player.Armor.cur));
+        statsCompletedLevelsText.setString("Completed Levels: " + std::to_string(completedLevels));
+        statsCurLevelsText.setString("Current Level: " + std::to_string(curLevel));
+        upgradeInterface::updateUpgradeInterfaceUI(player);
+    }
+}
 
 namespace upgradeInterface {
     bool isDrawUpgradeInterface = false;
@@ -164,9 +216,62 @@ namespace upgradeInterface {
         choiceCompImg.setTexture(*compTexture, UI::TextureResize::texture);
         choiceCompImg.moveToAnchor(&choiceComp, { -50, 0 });
     }
-}
 
-void openUpgradeShop();
+    void updateUpgradeTexts(Player& player) {
+        updateCostsText(compUpgCosts[0][0], &player.CurWeapon->MaxManaStorage, 50);
+        updateStatsText(compUpgStats[0][0], &player.CurWeapon->MaxManaStorage);
+        updateCountText(compUpgCount[0][0], &player.CurWeapon->MaxManaStorage);
+
+        updateCostsText(compUpgCosts[0][1], &player.CurWeapon->ReloadSpeed, 70);
+        updateStatsText(compUpgStats[0][1], &player.CurWeapon->ReloadSpeed);
+        updateCountText(compUpgCount[0][1], &player.CurWeapon->ReloadSpeed);
+
+        updateCostsText(compUpgCosts[1][0], &player.CurWeapon->TimeToHolster, 25);
+        updateStatsText(compUpgStats[1][0], &player.CurWeapon->TimeToHolster);
+        updateCountText(compUpgCount[1][0], &player.CurWeapon->TimeToHolster);
+
+        updateCostsText(compUpgCosts[1][1], &player.CurWeapon->TimeToDispatch, 25);
+        updateStatsText(compUpgStats[1][1], &player.CurWeapon->TimeToDispatch);
+        updateCountText(compUpgCount[1][1], &player.CurWeapon->TimeToDispatch);
+
+        updateCostsText(compUpgCosts[2][0], &player.CurWeapon->FireRate, 35);
+        updateStatsText(compUpgStats[2][0], &player.CurWeapon->FireRate);
+        updateCountText(compUpgCount[2][0], &player.CurWeapon->FireRate);
+
+        updateCostsText(compUpgCosts[2][1], &player.CurWeapon->ManaCostOfBullet, 80);
+        updateStatsText(compUpgStats[2][1], &player.CurWeapon->ManaCostOfBullet);
+        updateCountText(compUpgCount[2][1], &player.CurWeapon->ManaCostOfBullet);
+
+        updateCostsText(compUpgCosts[2][2], &player.CurWeapon->Multishot, 80);
+        updateStatsText(compUpgStats[2][2], &player.CurWeapon->Multishot);
+        updateCountText(compUpgCount[2][2], &player.CurWeapon->Multishot);
+
+        updateCostsText(compUpgCosts[3][0], &player.CurWeapon->BulletVelocity, 65);
+        updateStatsText(compUpgStats[3][0], &player.CurWeapon->BulletVelocity);
+        updateCountText(compUpgCount[3][0], &player.CurWeapon->BulletVelocity);
+
+        updateCostsText(compUpgCosts[3][1], &player.CurWeapon->Scatter, 65);
+        updateStatsText(compUpgStats[3][1], &player.CurWeapon->Scatter);
+        updateCountText(compUpgCount[3][1], &player.CurWeapon->Scatter);
+    }
+
+    void updateUpgradeInterfaceUI(Player& player) {
+        updateUpgradeTexts(player);
+        updateUpgradeShopStats();
+        playerCoinAmount.setFontString(FontString(std::to_string(player.inventory.money), 50, sf::Color(200, 200, 200)));
+        playerCoinAmount.parentTo(&coinSprite, true, { -10, 0 });
+    } 
+
+    void openUpgradeShop() {
+        initUpgradeUI();
+        setUpgradeFunctions();
+        updateUpgradeShopStats();
+        addUI(&BG, UIElements);
+        for (int i = 0; i < compUpgBtns.size(); i++)
+            for (int j = 0; j < compUpgBtns[i].size(); j++)
+                compUpgBtns[i][j]->setSpriteColor(sf::Color::White);
+    }
+}
 
 void initInventory(Player* player) {
     {
@@ -198,7 +303,7 @@ void initInventory(Player* player) {
             addUI(&upgradeInterface::BG, pageElements[activePage]);
             removeUI(&upgradeInterface::BG, pageElements[activePage], false);
             removeUI(&upgradeInterface::backButton, pageElements[activePage], false);
-            openUpgradeShop();
+            upgradeInterface::openUpgradeShop();
         });
         weaponsButton.parentTo(&itemsButton, true);
 
@@ -266,8 +371,6 @@ void initInventory(Player* player) {
         itemDescText.setOutlineColor(sf::Color::Black);
     }
 }
-
-void initUpgradeUI();
 
 void initUpgradeShop() {
     {
