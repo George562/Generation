@@ -14,6 +14,7 @@
 
 namespace upgradeInterface {
     void updateUpgradeInterfaceUI(Player& player);
+    void drawChoosingComponent(sf::RenderWindow& window);
 }
 
 void setUpgradeFunctions();

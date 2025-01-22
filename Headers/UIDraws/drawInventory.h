@@ -1,35 +1,32 @@
 #pragma once
 #include "../UIInits/initInventory.h"
 
-void drawChoosingComponent(sf::RenderWindow& window) {
-    {
-        using namespace upgradeInterface;
-        float listBGVal = 128 * std::pow(std::sin(GameClock->getElapsedTime().asSeconds()), 2);
-        if (isChoosingComponent) {
-            switch (compType) {
-                case 0:
-                    choiceComp.setSpriteColor(sf::Color(0, 0, listBGVal));
-                    break;
-                case 1:
-                    choiceComp.setSpriteColor(sf::Color(listBGVal, listBGVal, 0));
-                    break;
-                case 2:
-                    choiceComp.setSpriteColor(sf::Color(0, listBGVal, 0));
-                    break;
-                case 3:
-                    choiceComp.setSpriteColor(sf::Color(listBGVal, 0, 0));
-                    break;
-            }
-            for (sf::Drawable* elem : choiceUIElements)
-                window.draw(*elem);
-
-            for (sf::Drawable* elem : compUpgCosts[compType])
-                window.draw(*elem);
-            for (sf::Drawable* elem : compUpgStats[compType])
-                window.draw(*elem);
-            for (sf::Drawable* elem : compUpgCount[compType])
-                window.draw(*elem);
+void upgradeInterface::drawChoosingComponent(sf::RenderWindow& window) {
+    float listBGVal = 128 * std::pow(std::sin(GameClock->getElapsedTime().asSeconds()), 2);
+    if (isChoosingComponent) {
+        switch (compType) {
+            case 0:
+                choiceComp.setSpriteColor(sf::Color(0, 0, listBGVal));
+                break;
+            case 1:
+                choiceComp.setSpriteColor(sf::Color(listBGVal, listBGVal, 0));
+                break;
+            case 2:
+                choiceComp.setSpriteColor(sf::Color(0, listBGVal, 0));
+                break;
+            case 3:
+                choiceComp.setSpriteColor(sf::Color(listBGVal, 0, 0));
+                break;
         }
+        for (sf::Drawable* elem : choiceUIElements)
+            window.draw(*elem);
+
+        for (sf::Drawable* elem : compUpgCosts[compType])
+            window.draw(*elem);
+        for (sf::Drawable* elem : compUpgStats[compType])
+            window.draw(*elem);
+        for (sf::Drawable* elem : compUpgCount[compType])
+            window.draw(*elem);
     }
 }
 
