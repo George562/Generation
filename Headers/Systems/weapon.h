@@ -82,7 +82,7 @@ public:
 
 	virtual bool CanShoot() {
 		if (ManaStorage.toBottom() < ManaCostOfBullet) { lock = true; return false; }
-		if (lock || GameClock->getElapsedTime() - LastShotTime <= FireRate) return false;
+		if (lock || GameTime - LastShotTime <= FireRate) return false;
 		if (holstered || localClock->getElapsedTime() <= TimeToDispatch) return false;
 		return true;
 	}
@@ -97,7 +97,7 @@ public:
 		Bullets.push_back(new Bullet(f, SpawnPoint, direction, ManaCostOfBullet));
 		newBullets.push_back(Bullets.back());
 		ManaStorage -= ManaCostOfBullet;
-		LastShotTime = GameClock->getElapsedTime();
+		LastShotTime = GameTime;
 
 		ShootSound.setBuffer(SoundBuffers::Shoot2);
 		float minDistance = ShootSound.getMinDistance(), Distance = distance(shooter.getCenter(), sf::Vector2f(sf::Listener::getPosition().x, sf::Listener::getPosition().y));
@@ -245,7 +245,7 @@ public:
 			newBullets.push_back(Bullets.back());
         }
         ManaStorage -= ManaCostOfBullet;
-        LastShotTime = GameClock->getElapsedTime();
+        LastShotTime = GameTime;
         lock = true;
 
 		ShootSound.setBuffer(SoundBuffers::Shoot);
@@ -284,7 +284,7 @@ public:
 //         Bullets.push_back(new Bullet(f, SpawnPoint, d, ManaCostOfBullet));
 //         ManaStorage -= ManaCostOfBullet;
 //         Multishot.stats[Multishot.curLevel]++;
-//         LastShotTime = GameClock->getElapsedTime();
+//         LastShotTime = GameTime;
 //     }
 // };
 
@@ -312,7 +312,7 @@ public:
 			newBullets.push_back(Bullets.back());
 		}
         ManaStorage -= ManaCostOfBullet;
-        LastShotTime = GameClock->getElapsedTime();
+        LastShotTime = GameTime;
 
 		ShootSound.setBuffer(SoundBuffers::Shoot);
 		float minDistance = ShootSound.getMinDistance(), Distance = distance(shooter.getCenter(), sf::Vector2f(sf::Listener::getPosition().x, sf::Listener::getPosition().y));

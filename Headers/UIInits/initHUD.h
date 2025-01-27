@@ -15,10 +15,9 @@ namespace HUD {
     void updateHUDUI(Player& player);
     void loadDescriptions();
     void displayDescription(DescriptionID::Type id);
-}
 
-namespace HUD {
-    bool EscapeMenuActivated = false, IsDrawHUD = true;
+    bool EscapeMenuActivated = false, IsDrawHUD = true, isDrawSettings = false, showFPS = false;
+
     std::vector<sf::Drawable*> InterfaceStuff;
     std::vector<TempText*> TempTextsOnScreen, MessageText;
     std::vector<Frame*> effectIcons(Effects::EffectCount);
@@ -32,9 +31,10 @@ namespace HUD {
     Panel ListOfPlayers("listOfPlayers");
 
 //////////////////////////////////////////////////////////// Buttons
-    RectButton EscapeButton("exitBtn", UI::L, UI::R, { 0, 0 }, "");
-    RectButton SettingsButton("settingsBtn", UI::center, UI::center, { 0, 0 }, "");
-    RectButton EncyclopediaButton("encyclopediaBtn", UI::R, UI::L, { 0, 0 }, "");
+    RectButton EscapeButton("exitBtn", UI::L, UI::R, { 0, 0 });
+    RectButton SettingsButton("settingsBtn", UI::center, UI::center, { 0, 0 });
+    RectButton EncyclopediaButton("encyclopediaBtn", UI::R, UI::L, { 0, 0 });
+    RectButton FPSButton("settings_FPSBtn");
 
 //////////////////////////////////////////////////////////// HUDStuff
     Frame HUDFrame("HUD", { 0, 0, scw, sch });
@@ -131,6 +131,19 @@ void HUD::initHUD(Player& player, std::vector<Weapon*>& Weapons) {
     playerCoinAmount.parentTo(&coinSprite, true, { -10, 0 });
     playerCoinAmount.setOutlineColor(sf::Color::Black);
     playerCoinAmount.setOutlineThickness(2.f);
+
+    FPSButton.setTexture(Textures::CheckButton, Textures::CheckButton, UI::texture);
+    FPSButton.setHitboxPoints({ FPSButton.getLeftTop(), FPSButton.getRightTop(),
+                                FPSButton.getRightBottom(), FPSButton.getLeftBottom() });
+    FPSButton.setPosition(scw / 2.f - FPSButton.getSize().x / 2.f, sch / 2.f - FPSButton.getSize().y / 2.f);
+    FPSButton.setWord(FontString("Show FPS", 40));
+    FPSButton.sprite.setColor(showFPS ? sf::Color::Green : sf::Color::Red);
+    FPSButton.ButtonText.setFillColor(showFPS ? sf::Color::Black : sf::Color::White);
+    FPSButton.setFunction([] {
+        showFPS ^= true;
+        FPSButton.sprite.setColor(showFPS ? sf::Color::Green : sf::Color::Red);
+        FPSButton.ButtonText.setFillColor(showFPS ? sf::Color::Black : sf::Color::White);
+    });
 }
 
 void HUD::updateHUDUI(Player& player) {

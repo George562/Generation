@@ -74,9 +74,6 @@ constexpr float oneOverSixty = 1.f / 60.f;
 int completedLevels = 0;
 int curLevel = 1;
 
-
-int drawCount = 0;
-
 bool playerCanDash;
 bool playerMakingADash = false;
 
@@ -141,6 +138,7 @@ namespace Textures {
                 RedButtonPushed,
                 YellowButton,
                 YellowButtonPushed,
+                CheckButton,
 
                 SettingButton,
                 SettingButtonPushed,
@@ -214,6 +212,7 @@ void loadTextures() {
     Textures::RedButtonPushed          .loadFromFile("sources/textures/Buttons/RedButtonPushed.png");
     Textures::YellowButton             .loadFromFile("sources/textures/Buttons/YellowButton.png");
     Textures::YellowButtonPushed       .loadFromFile("sources/textures/Buttons/YellowButtonPushed.png");
+    Textures::CheckButton              .loadFromFile("sources/textures/Buttons/CheckButton.png");
 
     Textures::SettingButton            .loadFromFile("sources/textures/Buttons/SettingButton.png");
     Textures::SettingButtonPushed      .loadFromFile("sources/textures/Buttons/SettingButtonPushed.png");
@@ -249,7 +248,8 @@ namespace Shaders {
                Fire,
                WaveMix,
                Enemy,
-               Boss
+               Boss,
+               b_w
                ;
 }
 
@@ -269,6 +269,7 @@ void loadShaders() {
     Shaders::WaveMix     .loadFromFile("sources/shaders/waveMix/waveMix.vert",       "sources/shaders/waveMix/waveMix.frag"       );
     Shaders::Enemy       .loadFromFile("sources/shaders/enemy/enemy.vert",           "sources/shaders/enemy/enemy.frag"           );
     Shaders::Boss        .loadFromFile("sources/shaders/boss/boss.vert",             "sources/shaders/boss/boss.frag"             );
+    Shaders::b_w         .loadFromFile("sources/shaders/b&w/b&w.vert",               "sources/shaders/b&w/b&w.frag"               );
 }
 
 namespace Musics {
@@ -297,11 +298,7 @@ void loadSoundBuffers() {
     SoundBuffers::Engine .loadFromFile("sources/music/Engine.flac");
 }
 
-float random(sf::Vector2f v) {
-    float whole;
-    return std::modf( ( 1.f + std::sin( v.x * 12.9898f + v.y * 78.233f ) ) * 43758.5453123f, &whole);
-}
-float random(float x, float y) {
-    float whole;
-    return std::modf( ( 1.f + std::sin( x * 12.9898f + y * 78.233f ) ) * 43758.5453123f, &whole);
+namespace GameSettings {
+//////////////////////////////////////////////////////////// GameSettings
+    float soundVolume = 1.0f;
 }

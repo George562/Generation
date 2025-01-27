@@ -27,15 +27,17 @@ float noise (in vec2 uv) {
 }
 
 void main() {
-    vec2 uv = gl_FragCoord.xy / iResolution.xy;
+    vec2 uv = (gl_FragCoord.xy / iResolution.xy - 0.5) * 20.;
+    vec3 color = vec3(0.);
     float res = 0.;
-    uv *= 10.;
+    float rho = 2. * length(uv);
+    float phi = length(uv);
+    color.rg += 2. * smoothstep(10., 0., abs(length(uv - rho * vec2(cos(phi - iTime * 3.), sin(phi - iTime * 3.)))));
+    // res += 2. * smoothstep(10., 0., abs(length(uv - uv * rot(phi - iTime * 3.))));
+    phi += PI * 2. / 3.;
+    color.gb += 2. * smoothstep(10., 0., abs(length(uv - rho * vec2(cos(phi - iTime * 3.), sin(phi - iTime * 3.)))));
+    phi += PI * 2. / 3.;
+    color.br += 2. * smoothstep(10., 0., abs(length(uv - rho * vec2(cos(phi - iTime * 3.), sin(phi - iTime * 3.)))));
 
-    float pos = random(floor(vec2(uv.x + iTime, uv.y + iTime * 0.5)));
-    res += rectangle(fract(uv), vec2(0., 0.1 + pos * 0.8), vec2(0.2, 1.), PI / 2.);
-    // res += noise(uv);
-    // vec2 pos = vec2(random(floor(uv.x)), random(floor(uv.y)));
-    // res += rectangle(fract(uv), vec2(0.1 + pos.x * 0.8, 0.), vec2(0.2, 1.), 0.);
-    // res += rectangle(fract(uv), vec2(0., 0.1 + pos.y * 0.8), vec2(0.2, 1.), PI / 2.);
-    gl_FragColor = vec4(vec3(res), 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

@@ -72,6 +72,9 @@ void HUD::drawHUD(sf::RenderWindow& window, Player& player, std::vector<Weapon*>
         window.draw(EscapeButton);
         window.draw(SettingsButton);
         window.draw(EncyclopediaButton);
+        if (isDrawSettings) {
+            window.draw(FPSButton);
+        }
     }
 
     FPSCounter++;
@@ -80,7 +83,9 @@ void HUD::drawHUD(sf::RenderWindow& window, Player& player, std::vector<Weapon*>
         FPSCounter = 0;
         ClockFPS.restart();
     }
-    window.draw(TextFPS);
+    if (showFPS) {
+        window.draw(TextFPS);
+    }
 
     for (size_t i = 0; i < TempTextsOnScreen.size(); i++) {
         if (GameTime < TempTextsOnScreen[i]->howLongToExist) {

@@ -29,8 +29,8 @@ sf::ContextSettings settings;
 
 
 sf::RenderWindow window(sf::VideoMode(scw, sch), "multigame", sf::Style::Fullscreen, settings);
-sf::RenderTexture preRenderTexture, outlineRenderTexture;
-sf::Sprite preRenderSprite, outlineRenderSprite;
+sf::RenderTexture preRenderTexture, outlineRenderTexture, b_wRenderTexture;
+sf::Sprite preRenderSprite, outlineRenderSprite, b_wRenderSprite;
 float MiniMapZoom = 1.f;
 bool MiniMapActivated;
 std::vector<sf::Drawable*> DrawableStuff; // references to objects that exist somewhere
@@ -208,6 +208,9 @@ void init() {
     outlineRenderTexture.create(scw, sch);
     outlineRenderSprite.setTexture(outlineRenderTexture.getTexture());
 
+    b_wRenderTexture.create(scw, sch);
+    b_wRenderSprite.setTexture(b_wRenderTexture.getTexture());
+
     MiniMapView.setViewport(sf::FloatRect(0.f, 0.f, 0.25f, 0.25f));
     MiniMapZoom = std::pow(1.1, -10);
     MiniMapView.zoom(MiniMapZoom);
@@ -377,7 +380,7 @@ void initScripts() {
 
     HUD::SettingsButton.setFunction([]() {
         saveGame();
-        addMessageText("You don't have to press this button. It's not done yet.", sf::Color(170, 50, 50), sf::Color(150, 150, 150));
+        HUD::isDrawSettings ^= true;
     });
 
     HUD::EncyclopediaButton.setFunction([]() {
@@ -580,6 +583,14 @@ void draw() {
         }
 
         preRenderTexture.display();
+        if (HUD::EscapeMenuActivated) {
+            b_wRenderTexture.draw(preRenderSprite, &Shaders::b_w);
+            b_wRenderTexture.display();
+            preRenderTexture.setView(HUDView);
+            preRenderTexture.draw(b_wRenderSprite);
+            preRenderTexture.display();
+            preRenderTexture.setView(GameView);
+        }
 
         window.setView(HUDView);
         window.draw(preRenderSprite, &Shaders::Flashlight);
@@ -780,6 +791,9 @@ void EventHandler() {
                 }
             }
         } else if (HUD::EscapeMenuActivated) {
+            if (HUD::isDrawSettings) {
+                HUD::FPSButton.isActivated(event);
+            }
             HUD::EscapeButton.isActivated(event);
             HUD::SettingsButton.isActivated(event);
             HUD::EncyclopediaButton.isActivated(event);

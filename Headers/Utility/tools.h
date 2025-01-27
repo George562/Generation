@@ -234,3 +234,12 @@ sf::Packet& operator<<(sf::Packet& packet, std::vector<T>& v) {
     for (int i = 0; i < v.size(); i++) packet << v[i];
     return packet;
 }
+
+float random(sf::Vector2f v) {
+    float whole;
+    return std::modf( ( 1.f + std::sin( v.x * 12.9898f + v.y * 78.233f ) ) * 43758.5453123f, &whole);
+}
+float random(float x, float y) {
+    float whole;
+    return std::modf( ( 1.f + std::sin( x * 12.9898f + y * 78.233f ) ) * 43758.5453123f, &whole);
+}

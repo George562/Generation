@@ -12,9 +12,8 @@ namespace MenuShop {
     void initShop(Player& player);
     void drawShop(sf::RenderWindow& window, Player& player);
     void updateShopUI(Player& player);
-}
 
-namespace MenuShop {
+
     bool isDrawShop = false;
     Shop shop;
 

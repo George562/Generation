@@ -75,7 +75,7 @@ Chat::~Chat() {
 void Chat::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (inputted) {
         target.draw(rect, states);
-        if (GameClock->getElapsedTime() % sf::seconds(1.f) > sf::seconds(1.f / 2)) {
+        if (GameTime % sf::seconds(1.f) > sf::seconds(1.f / 2)) {
             target.draw(cursor, states);
         }
     }

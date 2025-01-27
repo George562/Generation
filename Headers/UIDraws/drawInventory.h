@@ -2,7 +2,7 @@
 #include "../UIInits/initInventory.h"
 
 void upgradeInterface::drawChoosingComponent(sf::RenderWindow& window) {
-    float listBGVal = 128 * std::pow(std::sin(GameClock->getElapsedTime().asSeconds()), 2);
+    float listBGVal = 128 * std::pow(std::sin(GameTime.asSeconds()), 2);
     if (isChoosingComponent) {
         switch (compType) {
             case 0:
